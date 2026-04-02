@@ -1,0 +1,15 @@
+.dart_tool/
+.packages
+build/
+.idea/
+.vscode/
+*.iml
+*.log
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Firebase / Android / iOS generated files (when you add platforms)
+android/.gradle/
+android/local.properties
+ios/Pods/
+

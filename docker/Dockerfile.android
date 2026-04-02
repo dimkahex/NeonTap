@@ -1,0 +1,40 @@
+# Reproducible Android APK build container.
+# Usage: docker build -t neonpulse-android -f docker/Dockerfile.android .
+# Then run build scripts in /workspace.
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl git unzip xz-utils zip libglu1-mesa openjdk-17-jdk \
+    && rm -rf /var/lib/apt/lists/*
+
+# Android SDK
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+
+RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools && \
+    curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline.zip && \
+    unzip -q /tmp/cmdline.zip -d /tmp && \
+    mv /tmp/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest && \
+    rm -f /tmp/cmdline.zip
+
+RUN yes | sdkmanager --licenses >/dev/null && \
+    sdkmanager \
+      "platform-tools" \
+      "platforms;android-34" \
+      "build-tools;34.0.0"
+
+# Flutter SDK
+ENV FLUTTER_HOME=/opt/flutter
+ENV PATH=$PATH:$FLUTTER_HOME/bin
+
+RUN git clone --depth 1 --branch stable https://github.com/flutter/flutter.git $FLUTTER_HOME && \
+    flutter --version && \
+    flutter config --no-analytics && \
+    flutter doctor -v
+
+WORKDIR /workspace
+
