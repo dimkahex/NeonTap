@@ -27,11 +27,16 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Ensure Android platform exists
+      # Firebase Android requires google-services.json at android/app/ (CI placeholder until you add a real file from Firebase Console).
+      - name: Ensure Android platform + Firebase config
         run: |
+          set -e
           if [ ! -d "android" ]; then
             flutter create --platforms=android --org com.neonpulse --project-name neon_pulse_online .
           fi
+          mkdir -p android/app
+          cp ci/android-placeholders/google-services.json android/app/google-services.json
+          python3 ci/patch_android_firebase_gradle.py
 
       - name: Build APK (release)
         run: flutter build apk --release

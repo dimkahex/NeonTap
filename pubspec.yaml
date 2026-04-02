@@ -21,11 +21,8 @@ dependencies:
   firebase_auth: ^5.1.1
   firebase_database: ^11.0.1
 
-  # Future hooks (stubs/placeholder usage in Phase 1).
-  rive: ^0.13.20
-  google_mobile_ads: ^5.1.0
-  purchases_flutter: ^6.22.0
-  flutter_local_notifications: ^17.1.2
+  # Future hooks: add when wired (avoid CI/native config until then).
+  # rive / google_mobile_ads / purchases_flutter / flutter_local_notifications
 
 dev_dependencies:
   flutter_test:
