@@ -5,12 +5,23 @@ on:
   push:
     branches: ["main", "master"]
 
+# GitHub Actions: reduce Node 20 deprecation noise for JS-based actions (checkout/setup-java).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Build context (commit SHA)
+        run: |
+          echo "HEAD=$(git rev-parse HEAD)"
+          git log -1 --oneline
+          echo ""
+          echo "NOTE: 'Re-run' repeats the SAME commit. If you see an old SHA (e.g. 7118e76), open the latest run after push or use workflow_dispatch on master."
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -38,8 +49,26 @@ jobs:
           cp ci/android-placeholders/google-services.json android/app/google-services.json
           python3 ci/patch_android_firebase_gradle.py
 
+      - name: Debug Gradle snippets (after patch)
+        run: |
+          set -e
+          echo "--- android/settings.gradle (first 120 lines) ---"
+          sed -n '1,120p' android/settings.gradle || true
+          echo "--- android/app/build.gradle (first 80 lines) ---"
+          sed -n '1,80p' android/app/build.gradle || true
+
       - name: Build APK (release)
-        run: flutter build apk --release
+        run: |
+          set -euo pipefail
+          flutter build apk --release
+
+      - name: Gradle stacktrace (only if Flutter build failed)
+        if: failure()
+        working-directory: android
+        run: |
+          set -euo pipefail
+          chmod +x gradlew || true
+          ./gradlew :app:assembleRelease --stacktrace --warning-mode all
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
