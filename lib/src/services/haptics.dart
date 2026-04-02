@@ -12,6 +12,8 @@ class Haptics {
         return HapticFeedback.mediumImpact();
       case HitJudgement.good:
         return HapticFeedback.lightImpact();
+      case HitJudgement.ok:
+        return HapticFeedback.selectionClick();
       case HitJudgement.miss:
         return HapticFeedback.vibrate();
     }
