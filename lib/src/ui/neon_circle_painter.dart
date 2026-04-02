@@ -11,16 +11,18 @@ class NeonCirclePainter extends CustomPainter {
     required this.maxRadius,
     required this.pulse,
     required this.missFlash,
+    required this.centerOffset,
   });
 
   final double radius;
   final double maxRadius;
   final double pulse; // 0..1
   final double missFlash; // 0..1
+  final Offset centerOffset;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Offset c = Offset(size.width / 2, size.height / 2);
+    final Offset c = Offset(size.width / 2, size.height / 2) + centerOffset;
     final Rect bounds = Offset.zero & size;
 
     final Paint bgGlow = Paint()
@@ -56,6 +58,7 @@ class NeonCirclePainter extends CustomPainter {
     _ring(canvas, c, 70, Colors.orangeAccent.withOpacity(0.35));
     _ring(canvas, c, 30, const Color(0xFF2CFF7B).withOpacity(0.45));
     _ring(canvas, c, 15, const Color(0xFFFFE082).withOpacity(0.55), width: 2.5);
+    _ring(canvas, c, 110, Colors.white.withOpacity(0.10), width: 1.5); // OK zone (wide / low points)
 
     canvas.drawCircle(c, r * 1.02 * distract, outerGlow);
     canvas.drawCircle(c, r * distract, ring);
@@ -79,7 +82,8 @@ class NeonCirclePainter extends CustomPainter {
     return oldDelegate.radius != radius ||
         oldDelegate.maxRadius != maxRadius ||
         oldDelegate.pulse != pulse ||
-        oldDelegate.missFlash != missFlash;
+        oldDelegate.missFlash != missFlash ||
+        oldDelegate.centerOffset != centerOffset;
   }
 }
 

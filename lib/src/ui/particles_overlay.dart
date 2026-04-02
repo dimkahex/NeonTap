@@ -51,6 +51,7 @@ class _ParticlesOverlayState extends State<ParticlesOverlay> with SingleTickerPr
               t: _c.value,
               color: _colorFor(e.j),
               seed: e.seed,
+              intensity: e.intensity,
             ),
             size: Size.infinite,
           );
@@ -68,11 +69,12 @@ class _ParticlesOverlayState extends State<ParticlesOverlay> with SingleTickerPr
 }
 
 class _ParticlesPainter extends CustomPainter {
-  _ParticlesPainter({required this.t, required this.color, required this.seed});
+  _ParticlesPainter({required this.t, required this.color, required this.seed, required this.intensity});
 
   final double t; // 0..1
   final Color color;
   final int seed;
+  final double intensity; // 0.8..1.6
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -81,17 +83,17 @@ class _ParticlesPainter extends CustomPainter {
     // Expanding shockwave.
     final Paint wave = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
+      ..strokeWidth = 3.0 * intensity
       ..color = color.withOpacity((1 - t) * 0.55);
-    canvas.drawCircle(c, 30 + 220 * t, wave);
+    canvas.drawCircle(c, 30 + (220 * intensity) * t, wave);
 
     // Simple burst dots.
     final math.Random r = math.Random(seed);
-    final int n = 18;
+    final int n = (18 * intensity).round().clamp(12, 48);
     for (int i = 0; i < n; i++) {
       final double a = r.nextDouble() * math.pi * 2;
-      final double sp = 40 + r.nextDouble() * 180;
-      final double rad = 2 + r.nextDouble() * 3;
+      final double sp = (40 + r.nextDouble() * 180) * intensity;
+      final double rad = (2 + r.nextDouble() * 3) * (0.85 + 0.25 * intensity);
       final double dist = sp * Curves.easeOut.transform(t);
       final Offset p = c + Offset(math.cos(a), math.sin(a)) * dist;
       final Paint dot = Paint()..color = color.withOpacity((1 - t) * 0.9);
@@ -106,15 +108,16 @@ class _ParticlesPainter extends CustomPainter {
 }
 
 class ParticleEvent {
-  const ParticleEvent({required this.j, required this.seed});
+  const ParticleEvent({required this.j, required this.seed, required this.intensity});
 
   final HitJudgement j;
   final int seed;
+  final double intensity;
 }
 
 ValueNotifier<ParticleEvent?> particleEventsNotifier() => ValueNotifier<ParticleEvent?>(null);
 
-void emitParticleEvent(ValueNotifier<ParticleEvent?> n, HitJudgement j, int seed) {
-  n.value = ParticleEvent(j: j, seed: seed);
+void emitParticleEvent(ValueNotifier<ParticleEvent?> n, HitJudgement j, int seed, {required double intensity}) {
+  n.value = ParticleEvent(j: j, seed: seed, intensity: intensity);
 }
 

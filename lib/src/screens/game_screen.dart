@@ -11,6 +11,7 @@ import '../services/local_stats.dart';
 import '../services/sfx.dart';
 import '../ui/neon_background.dart';
 import '../ui/neon_circle_painter.dart';
+import '../ui/floating_points_overlay.dart';
 import '../ui/particles_overlay.dart';
 import 'results_screen.dart';
 
@@ -29,8 +30,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   late AnimationController _shrink;
   late AnimationController _pulse;
   late AnimationController _missFlash;
+  late AnimationController _hitPulse;
+  late AnimationController _drift;
 
   final ValueNotifier<ParticleEvent?> _particleEvents = particleEventsNotifier();
+  final ValueNotifier<FloatingPointsEvent?> _floatingPoints = floatingPointsNotifier();
+  final ValueNotifier<Offset> _centerOffset = ValueNotifier<Offset>(Offset.zero);
 
   int _score = 0;
   int _comboPow = 0; // 0..4 => x1..x16
@@ -52,6 +57,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       ..forward();
     _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..repeat();
     _missFlash = AnimationController(vsync: this, duration: const Duration(milliseconds: 180));
+    _hitPulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 140));
+    _drift = AnimationController(vsync: this, duration: const Duration(milliseconds: 3200))
+      ..addListener(_updateDrift)
+      ..repeat();
   }
 
   @override
@@ -61,6 +70,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _shrink.dispose();
     _pulse.dispose();
     _missFlash.dispose();
+    _hitPulse.dispose();
+    _drift.dispose();
+    _centerOffset.dispose();
     Sfx.stop();
     super.dispose();
   }
@@ -89,6 +101,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (r < 15) return HitJudgement.ultra;
     if (r < 30) return HitJudgement.perfect;
     if (r < 70) return HitJudgement.good;
+    if (r < 110) return HitJudgement.ok;
     return HitJudgement.miss;
   }
 
@@ -100,7 +113,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   Future<void> _handleJudgement(HitJudgement j) async {
     final int seed = DateTime.now().microsecondsSinceEpoch & 0x7fffffff;
-    emitParticleEvent(_particleEvents, j, seed);
+    final double intensity = switch (j) {
+      HitJudgement.ultra => 1.55,
+      HitJudgement.perfect => 1.25,
+      HitJudgement.good => 1.05,
+      HitJudgement.ok => 0.9,
+      HitJudgement.miss => 0.95,
+    };
+    emitParticleEvent(_particleEvents, j, seed, intensity: intensity);
 
     await Future.wait(<Future<void>>[
       Haptics.forJudgement(j),
@@ -114,22 +134,27 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _comboPow = (_comboPow + 1).clamp(0, 4);
         _bestComboPow = math.max(_bestComboPow, _comboPow);
         final int add = j.basePoints * _comboMultiplier;
-        setState(() {
-          _score += add;
-        });
-        _showBigText(j.label, scale: 1.14, glow: true);
+        emitFloatingPoints(_floatingPoints, value: add, j: j, seed: seed);
+        _hitPulse.forward(from: 0);
+        _showBigText(j.label, scale: 1.16, glow: true);
         _slowMoFor(const Duration(seconds: 5));
+        await Future<void>.delayed(const Duration(milliseconds: 120));
+        if (!mounted) return;
+        setState(() => _score += add);
         _restartCycle(scoreAfterTap: _score);
         return;
       case HitJudgement.perfect:
       case HitJudgement.good:
+      case HitJudgement.ok:
         _comboPow = (_comboPow + 1).clamp(0, 4);
         _bestComboPow = math.max(_bestComboPow, _comboPow);
         final int add = j.basePoints * _comboMultiplier;
-        setState(() {
-          _score += add;
-        });
-        _showBigText(j.label, scale: 1.06, glow: false);
+        emitFloatingPoints(_floatingPoints, value: add, j: j, seed: seed);
+        _hitPulse.forward(from: 0);
+        _showBigText(j.label, scale: j == HitJudgement.ok ? 1.02 : 1.08, glow: j == HitJudgement.perfect);
+        await Future<void>.delayed(const Duration(milliseconds: 110));
+        if (!mounted) return;
+        setState(() => _score += add);
         _restartCycle(scoreAfterTap: _score);
         return;
       case HitJudgement.miss:
@@ -141,6 +166,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         await _finishRun();
         return;
     }
+  }
+
+  void _updateDrift() {
+    // Drift starts later to keep early game clean.
+    if (_score < 150) {
+      if (_centerOffset.value != Offset.zero) _centerOffset.value = Offset.zero;
+      return;
+    }
+    final double t = _drift.value * math.pi * 2;
+    final double amp = (_score >= 400 ? 18.0 : 10.0);
+    _centerOffset.value = Offset(math.sin(t * 0.9) * amp, math.cos(t * 1.1) * (amp * 0.7));
   }
 
   void _slowMoFor(Duration d) {
@@ -214,15 +250,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             children: <Widget>[
               Positioned.fill(
                 child: AnimatedBuilder(
-                  animation: Listenable.merge(<Listenable>[_shrink, _pulse, _missFlash]),
+                  animation: Listenable.merge(<Listenable>[_shrink, _pulse, _missFlash, _hitPulse, _centerOffset]),
                   builder: (BuildContext context, _) {
                     final double r = _currentRadius;
+                    final double hitScale = 1.0 + (0.035 * (1.0 - Curves.easeOut.transform(_hitPulse.value)));
                     return CustomPaint(
                       painter: NeonCirclePainter(
-                        radius: r,
+                        radius: r * hitScale,
                         maxRadius: _maxRadius,
                         pulse: distract ? _pulse.value : 0,
                         missFlash: _missFlash.value,
+                        centerOffset: _centerOffset.value,
                       ),
                       child: const SizedBox.expand(),
                     );
@@ -230,6 +268,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 ),
               ),
               Positioned.fill(child: ParticlesOverlay(events: _particleEvents)),
+              Positioned.fill(child: FloatingPointsOverlay(events: _floatingPoints, centerOffset: _centerOffset)),
               Positioned(
                 top: 14,
                 left: 16,
@@ -288,8 +327,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               fontWeight: FontWeight.w900,
                               letterSpacing: 2.8,
                               shadows: const <Shadow>[
-                                Shadow(color: Color(0x8835E6FF), blurRadius: 24),
-                                Shadow(color: Color(0x66FF2ED1), blurRadius: 28),
+                                Shadow(color: Color(0xAA35E6FF), blurRadius: 28),
+                                Shadow(color: Color(0x88FF2ED1), blurRadius: 34),
                               ],
                             ),
                       ),
