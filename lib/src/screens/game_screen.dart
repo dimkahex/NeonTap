@@ -13,6 +13,7 @@ import '../ui/neon_background.dart';
 import '../ui/neon_circle_painter.dart';
 import '../ui/floating_points_overlay.dart';
 import '../ui/particles_overlay.dart';
+import '../ui/spiral_overlay.dart';
 import 'results_screen.dart';
 
 class GameScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   static const double _maxRadius = 270;
+  static const double _tapLeniencyPx = 22;
 
   late AnimationController _shrink;
   late AnimationController _pulse;
@@ -105,8 +107,18 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return HitJudgement.miss;
   }
 
-  Future<void> _handleTap() async {
+  Future<void> _handleTap(Offset tapPos, Size screenSize) async {
+    // Mechanical difficulty: from mid-game, center drifts AND tap must hit the circle.
+    final Offset center = Offset(screenSize.width / 2, screenSize.height / 2) + _centerOffset.value;
+    final double tapDist = (tapPos - center).distance;
     final double r = _currentRadius;
+
+    final bool requireHit = _score >= 150;
+    if (requireHit && tapDist > (r + _tapLeniencyPx)) {
+      await _handleJudgement(HitJudgement.miss);
+      return;
+    }
+
     final HitJudgement j = _judge(r);
     await _handleJudgement(j);
   }
@@ -240,14 +252,27 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final Difficulty d = difficultyForScore(_score);
     final bool distract = d.pulseDistract;
+    final double spiralIntensity = switch (_score) {
+      < 150 => 0.0,
+      < 400 => 0.45,
+      _ => 0.95,
+    };
 
     return Scaffold(
       body: NeonBackground(
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTapDown: (_) => unawaited(_handleTap()),
+          onTapDown: (TapDownDetails details) =>
+              unawaited(_handleTap(details.localPosition, MediaQuery.sizeOf(context))),
           child: Stack(
             children: <Widget>[
+              Positioned.fill(
+                child: SpiralOverlay(
+                  centerOffset: _centerOffset,
+                  enabled: _score >= 150,
+                  intensity: spiralIntensity,
+                ),
+              ),
               Positioned.fill(
                 child: AnimatedBuilder(
                   animation: Listenable.merge(<Listenable>[_shrink, _pulse, _missFlash, _hitPulse, _centerOffset]),
