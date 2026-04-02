@@ -60,7 +60,8 @@ jobs:
       - name: Build APK (release)
         run: |
           set -euo pipefail
-          flutter build apk --release
+          # Build split-per-ABI to support emulators like BlueStacks (x86_64)
+          flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64,android-x64
 
       - name: Gradle stacktrace (only if Flutter build failed)
         if: failure()
@@ -74,5 +75,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: neon_pulse_online-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            build/app/outputs/flutter-apk/app-*-release.apk
 
