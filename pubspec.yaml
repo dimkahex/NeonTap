@@ -1,5 +1,5 @@
 name: neon_pulse_online
-description: Ultra-minimalist neon timing game with online hooks (Phase 1: offline core).
+description: "Ultra-minimalist neon timing game with online hooks (Phase 1: offline core)."
 publish_to: "none"
 
 version: 0.1.0+1
