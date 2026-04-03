@@ -12,6 +12,7 @@ import '../services/haptics.dart';
 import '../services/leaderboard_service.dart';
 import '../services/local_stats.dart';
 import '../services/sfx.dart';
+import '../services/challenge_service.dart';
 import '../ui/neon_background.dart';
 import '../ui/neon_circle_painter.dart';
 import '../ui/floating_points_overlay.dart';
@@ -337,6 +338,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       LeaderboardService.syncBestFromLocal(
         bestScore: bestScore,
         bestCombo: bestComboStored,
+      ),
+    );
+    unawaited(
+      ChallengeService.submitRun(
+        score: _score,
+        bestCombo: bestCombo,
       ),
     );
 

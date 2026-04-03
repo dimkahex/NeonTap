@@ -60,6 +60,8 @@ flutter create --platforms=android --project-name neon_pulse_online .
 
 Без **`.indexOn": "score"`** на `leaderboard/global` запрос глобального топа с сортировкой по `score` **упадёт** с ошибкой индекса.
 
+Для **вызовов** нужна ветка `challenges/*` — она уже добавлена в `database.rules.json`.
+
 ---
 
 ## 6. Проверка на телефоне

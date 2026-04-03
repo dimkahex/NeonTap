@@ -102,6 +102,26 @@ class FriendsService {
     return null;
   }
 
+  static Future<String?> resolveUidByCode(String code) async {
+    if (!kFirebaseOnlineFeaturesEnabled) {
+      return null;
+    }
+    await _ensureAuth();
+    if (!_ready) {
+      return null;
+    }
+    final DataSnapshot snap = await FirebaseDatabase.instance.ref('friendCodes/$code').get();
+    if (!snap.exists || snap.value is! Map) {
+      return null;
+    }
+    final Map<Object?, Object?> m = snap.value! as Map<Object?, Object?>;
+    final String? uid = m['uid'] as String?;
+    if (uid == null || uid.isEmpty) {
+      return null;
+    }
+    return uid;
+  }
+
   static Future<List<String>> listFriendUids() async {
     if (!kFirebaseOnlineFeaturesEnabled) {
       return <String>[];

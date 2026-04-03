@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'config/online_config.dart';
 import 'firebase/firebase_bootstrap.dart';
 import 'screens/leaderboard_screen.dart';
+import 'screens/challenges_screen.dart';
 import 'screens/game_screen.dart';
 import 'screens/main_menu_screen.dart';
 import 'screens/profile_screen.dart';
@@ -41,6 +42,7 @@ class _NeonPulseAppState extends State<NeonPulseApp> {
         SplashScreen.route: (_) => const SplashScreen(),
         MainMenuScreen.route: (_) => const MainMenuScreen(),
         LeaderboardScreen.route: (_) => const LeaderboardScreen(),
+        ChallengesScreen.route: (_) => const ChallengesScreen(),
         VersusScreen.route: (_) => const VersusScreen(),
         GameScreen.route: (_) => const GameScreen(),
         ResultsScreen.route: (_) => const ResultsScreen(),
