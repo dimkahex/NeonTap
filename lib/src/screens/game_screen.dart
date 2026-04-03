@@ -7,6 +7,7 @@ import '../app_version.dart';
 import '../game/difficulty.dart';
 import '../game/judgement.dart';
 import '../game/run_result.dart';
+import '../game/run_stats.dart';
 import '../services/haptics.dart';
 import '../services/local_stats.dart';
 import '../services/sfx.dart';
@@ -31,6 +32,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   static const double _maxRadius = 270;
   /// Half-width of the "ring" band — tap must land on the shrinking circle (not random screen tap).
   static const double _ringHalfWidthPx = 30;
+  /// Outer graze band — wider, minimal points ([HitJudgement.graze]).
+  static const double _ringWideHalfWidthPx = 52;
   /// Decorative spiral "eye" — if the ring is far out, tapping the eye is a miss.
   static const double _voidEyePx = 16;
   /// Ring aim + spiral visible early (was 150 — too long to notice in a short run).
@@ -51,6 +54,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   int _comboPow = 0; // 0..4 => x1..x16
   int _bestComboPow = 0;
 
+  int _hitsUltra = 0;
+  int _hitsPerfect = 0;
+  int _hitsGood = 0;
+  int _hitsOk = 0;
+  int _hitsGraze = 0;
+
   String? _bigText;
   double _bigTextScale = 1;
   double _bigTextOpacity = 0;
@@ -59,12 +68,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   bool _slowMo = false;
   Timer? _slowMoTimer;
 
+  /// Spiral rotation follows shrink cycle with easing — visually aligned with the ring.
+  late final Animation<double> _spiralPhaseSmooth;
+
+  double _bonusScoreMul = 1.0;
+  Timer? _bonusTimer;
+
   @override
   void initState() {
     super.initState();
     _shrink = AnimationController(vsync: this, duration: const Duration(milliseconds: 3000))
       ..addStatusListener(_onShrinkStatus)
       ..forward();
+    _spiralPhaseSmooth = CurvedAnimation(parent: _shrink, curve: Curves.easeInOutCubic);
     _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..repeat();
     _missFlash = AnimationController(vsync: this, duration: const Duration(milliseconds: 180));
     _hitPulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 140));
@@ -77,6 +93,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void dispose() {
     _bigTextTimer?.cancel();
     _slowMoTimer?.cancel();
+    _bonusTimer?.cancel();
     _shrink.dispose();
     _pulse.dispose();
     _missFlash.dispose();
@@ -122,23 +139,44 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final double tapDist = (tapPos - center).distance;
     final double r = _currentRadius;
 
-    // Ring aim: tap must land on the current ring (not anywhere on screen).
     final bool ringAim = _score >= _ringAimMinScore;
     if (ringAim) {
       final double delta = (tapDist - r).abs();
-      if (delta > _ringHalfWidthPx) {
+      if (delta > _ringWideHalfWidthPx) {
         await _handleJudgement(HitJudgement.miss);
         return;
       }
-      // Spiral eye: if ring is far from center, tapping the empty middle is not a hit.
       if (r > 52 && tapDist < _voidEyePx) {
         await _handleJudgement(HitJudgement.miss);
         return;
       }
+      final HitJudgement timing = _judge(r);
+      if (timing == HitJudgement.miss) {
+        await _handleJudgement(HitJudgement.miss);
+        return;
+      }
+      final HitJudgement j = delta > _ringHalfWidthPx ? HitJudgement.graze : timing;
+      await _handleJudgement(j);
+      return;
     }
 
     final HitJudgement j = _judge(r);
     await _handleJudgement(j);
+  }
+
+  /// Random short score boost — procs on successful hits.
+  void _maybeRollBonus() {
+    if (_bonusScoreMul > 1.01) return;
+    final double p = 0.035 + math.min(0.08, _score * 0.00012);
+    if (math.Random().nextDouble() < p) {
+      _bonusTimer?.cancel();
+      if (!mounted) return;
+      setState(() => _bonusScoreMul = 2.0);
+      final int ms = 1000 + math.Random().nextInt(900);
+      _bonusTimer = Timer(Duration(milliseconds: ms), () {
+        if (mounted) setState(() => _bonusScoreMul = 1.0);
+      });
+    }
   }
 
   Future<void> _handleJudgement(HitJudgement j) async {
@@ -148,6 +186,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       HitJudgement.perfect => 1.25,
       HitJudgement.good => 1.05,
       HitJudgement.ok => 0.9,
+      HitJudgement.graze => 0.82,
       HitJudgement.miss => 0.95,
     };
     emitParticleEvent(_particleEvents, j, seed, intensity: intensity);
@@ -161,9 +200,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
     switch (j) {
       case HitJudgement.ultra:
+        _hitsUltra++;
         _comboPow = (_comboPow + 1).clamp(0, 4);
         _bestComboPow = math.max(_bestComboPow, _comboPow);
-        final int add = j.basePoints * _comboMultiplier;
+        final int add = (j.basePoints * _comboMultiplier * _bonusScoreMul).round();
         emitFloatingPoints(_floatingPoints, value: add, j: j, seed: seed);
         _hitPulse.forward(from: 0);
         _showBigText(j.label, scale: 1.16, glow: true);
@@ -171,20 +211,40 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         await Future<void>.delayed(const Duration(milliseconds: 120));
         if (!mounted) return;
         setState(() => _score += add);
+        _maybeRollBonus();
         _restartCycle(scoreAfterTap: _score);
         return;
       case HitJudgement.perfect:
       case HitJudgement.good:
       case HitJudgement.ok:
+      case HitJudgement.graze:
+        if (j == HitJudgement.perfect) {
+          _hitsPerfect++;
+        } else if (j == HitJudgement.good) {
+          _hitsGood++;
+        } else if (j == HitJudgement.ok) {
+          _hitsOk++;
+        } else if (j == HitJudgement.graze) {
+          _hitsGraze++;
+        }
         _comboPow = (_comboPow + 1).clamp(0, 4);
         _bestComboPow = math.max(_bestComboPow, _comboPow);
-        final int add = j.basePoints * _comboMultiplier;
+        final int add = (j.basePoints * _comboMultiplier * _bonusScoreMul).round();
         emitFloatingPoints(_floatingPoints, value: add, j: j, seed: seed);
         _hitPulse.forward(from: 0);
-        _showBigText(j.label, scale: j == HitJudgement.ok ? 1.02 : 1.08, glow: j == HitJudgement.perfect);
+        _showBigText(
+          j.label,
+          scale: switch (j) {
+            HitJudgement.graze => 0.94,
+            HitJudgement.ok => 1.02,
+            _ => 1.08,
+          },
+          glow: j == HitJudgement.perfect,
+        );
         await Future<void>.delayed(const Duration(milliseconds: 110));
         if (!mounted) return;
         setState(() => _score += add);
+        _maybeRollBonus();
         _restartCycle(scoreAfterTap: _score);
         return;
       case HitJudgement.miss:
@@ -193,7 +253,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _missFlash.forward(from: 0);
         await Future<void>.delayed(const Duration(milliseconds: 180));
         if (!mounted) return;
-        await _finishRun();
+        await _exitToResults();
         return;
     }
   }
@@ -243,15 +303,25 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     });
   }
 
-  Future<void> _finishRun() async {
+  Future<void> _exitToResults() async {
     _shrink.stop();
     final int bestCombo = 1 << _bestComboPow;
 
     final (int bestScore, int bestComboStored, bool newBest) =
         await LocalStats.updateBestIfNeeded(score: _score, bestCombo: bestCombo);
 
+    final int lifetimeRun = await LocalStats.incrementTotalRuns();
+
     // Placeholder "global rank": higher score => lower number.
     final int rankEstimate = (120000 / math.max(1, _score + 12)).round().clamp(1, 99999);
+
+    final JudgementBreakdown breakdown = JudgementBreakdown(
+      ultra: _hitsUltra,
+      perfect: _hitsPerfect,
+      good: _hitsGood,
+      ok: _hitsOk,
+      graze: _hitsGraze,
+    );
 
     final RunResult result = RunResult(
       score: _score,
@@ -259,6 +329,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       isNewBestScore: newBest,
       bestScore: bestScore,
       rankEstimate: rankEstimate,
+      breakdown: breakdown,
+      lifetimeRunIndex: lifetimeRun,
     );
 
     if (!mounted) return;
@@ -281,7 +353,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final double spiralIntensity = _spiralIntensityForScore(_score);
     final bool ringAim = _score >= _ringAimMinScore;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
+        if (didPop) return;
+        await _exitToResults();
+      },
+      child: Scaffold(
       body: NeonBackground(
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -291,6 +369,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             children: <Widget>[
               Positioned.fill(
                 child: SpiralOverlay(
+                  shrinkSmoothPhase: _spiralPhaseSmooth,
                   centerOffset: _centerOffset,
                   enabled: true,
                   intensity: spiralIntensity,
@@ -312,6 +391,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               centerOffset: _centerOffset.value,
                               ringRadius: rr,
                               halfWidth: _ringHalfWidthPx,
+                              wideHalfWidth: _ringWideHalfWidthPx,
                               opacity: 1.0,
                             ),
                             child: const SizedBox.expand(),
@@ -334,8 +414,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               Positioned.fill(child: ParticlesOverlay(events: _particleEvents)),
               Positioned.fill(child: FloatingPointsOverlay(events: _floatingPoints, centerOffset: _centerOffset)),
               Positioned(
+                top: 8,
+                left: 8,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white54),
+                  tooltip: 'End run',
+                  onPressed: () => unawaited(_exitToResults()),
+                ),
+              ),
+              Positioned(
                 top: 14,
-                left: 16,
+                left: 56,
                 right: 16,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -370,7 +459,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     const SizedBox(height: 8),
                     Text(
                       ringAim
-                          ? 'AIM: tap on the ring (not empty space)'
+                          ? 'AIM: inner ring = full score; outer dim band = GRAZE (1pt)'
                           : 'Warm-up — ring aim starts soon',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: ringAim ? const Color(0xFF35E6FF) : Colors.white54,
@@ -388,12 +477,35 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
-                    Text(
-                      'x$_comboMultiplier',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.6,
+                    Row(
+                      children: <Widget>[
+                        Text(
+                          'x$_comboMultiplier',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.6,
+                              ),
+                        ),
+                        if (_bonusScoreMul > 1.01) ...<Widget>[
+                          const SizedBox(width: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: const Color(0xFFFFE082), width: 1.2),
+                              color: const Color(0x22FFE082),
+                            ),
+                            child: Text(
+                              'SCORE x2',
+                              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: const Color(0xFFFFE082),
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.2,
+                                  ),
+                            ),
                           ),
+                        ],
+                      ],
                     ),
                     Text(
                       '${d.shrinkSeconds.toStringAsFixed(2)}s',
@@ -433,6 +545,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           ),
         ),
       ),
+    ),
     );
   }
 }

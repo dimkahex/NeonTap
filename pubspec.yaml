@@ -3,7 +3,7 @@ description: "Ultra-minimalist neon timing game with online hooks (Phase 1: offl
 publish_to: "none"
 
 # name+b: bump +1 for each release build (visible in APK filenames from CI).
-version: 0.2.0+4
+version: 0.2.0+5
 
 environment:
   sdk: ">=3.3.0 <4.0.0"

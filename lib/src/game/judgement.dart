@@ -1,4 +1,6 @@
 enum HitJudgement {
+  /// Wide outer band — minimal points (easier aim).
+  graze,
   ok,
   ultra,
   perfect,
@@ -8,6 +10,7 @@ enum HitJudgement {
 
 extension HitJudgementUi on HitJudgement {
   String get label => switch (this) {
+        HitJudgement.graze => 'GRAZE',
         HitJudgement.ok => 'OK',
         HitJudgement.ultra => 'ULTRA',
         HitJudgement.perfect => 'PERFECT',
@@ -16,7 +19,8 @@ extension HitJudgementUi on HitJudgement {
       };
 
   int get basePoints => switch (this) {
-        HitJudgement.ok => 1,
+        HitJudgement.graze => 1,
+        HitJudgement.ok => 2,
         HitJudgement.ultra => 10,
         HitJudgement.perfect => 5,
         HitJudgement.good => 2,

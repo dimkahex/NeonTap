@@ -25,6 +25,7 @@ class Sfx {
       HitJudgement.perfect => 'sfx/perfect_hit.wav',
       HitJudgement.good => 'sfx/good_tick.wav',
       HitJudgement.ok => 'sfx/ok_click.wav',
+      HitJudgement.graze => 'sfx/ok_click.wav',
       HitJudgement.miss => 'sfx/miss_error.wav',
     };
     try {

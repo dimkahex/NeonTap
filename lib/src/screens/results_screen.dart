@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../game/run_result.dart';
+import '../game/run_stats.dart';
 import '../ui/neon_background.dart';
 import 'game_screen.dart';
 import 'main_menu_screen.dart';
@@ -21,6 +22,8 @@ class ResultsScreen extends StatelessWidget {
             isNewBestScore: false,
             bestScore: 0,
             rankEstimate: 99999,
+            breakdown: JudgementBreakdown(),
+            lifetimeRunIndex: 0,
           );
 
     return Scaffold(
@@ -41,6 +44,24 @@ class ResultsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               _StatTile(label: 'FINAL SCORE', value: r.score.toString()),
+              const SizedBox(height: 10),
+              if (r.lifetimeRunIndex > 0)
+                _StatTile(
+                  label: 'RUN #',
+                  value: r.lifetimeRunIndex.toString(),
+                ),
+              if (r.lifetimeRunIndex > 0) const SizedBox(height: 10),
+              _StatTile(
+                label: 'ACCURACY',
+                value: '${r.breakdown.accuracyPercent.toStringAsFixed(1)}%',
+                subtitle: '${r.breakdown.totalHits} hits',
+              ),
+              const SizedBox(height: 10),
+              _StatTile(
+                label: 'HIT BREAKDOWN',
+                value: _breakdownLine(r.breakdown),
+                small: true,
+              ),
               const SizedBox(height: 10),
               _StatTile(label: 'BEST COMBO', value: 'x${r.bestCombo}'),
               const SizedBox(height: 10),
@@ -80,21 +101,44 @@ class ResultsScreen extends StatelessWidget {
   }
 }
 
+String _breakdownLine(JudgementBreakdown b) {
+  return 'ULTRA ${b.ultra}  PERF ${b.perfect}  GOOD ${b.good}  OK ${b.ok}  GRAZE ${b.graze}';
+}
+
 class _StatTile extends StatelessWidget {
-  const _StatTile({required this.label, required this.value, this.badge});
+  const _StatTile({
+    required this.label,
+    required this.value,
+    this.badge,
+    this.subtitle,
+    this.small = false,
+  });
 
   final String label;
   final String value;
   final String? badge;
+  final String? subtitle;
+  final bool small;
 
   @override
   Widget build(BuildContext context) {
+    final TextStyle? valueStyle = small
+        ? Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
+              color: Colors.white.withValues(alpha: 0.92),
+            )
+        : Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.2,
+            );
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFF35E6FF), width: 1.1),
-        color: Colors.black.withOpacity(0.18),
+        color: Colors.black.withValues(alpha: 0.18),
       ),
       child: Row(
         children: <Widget>[
@@ -111,13 +155,17 @@ class _StatTile extends StatelessWidget {
                       ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  value,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                      ),
-                ),
+                Text(value, style: valueStyle),
+                if (subtitle != null) ...<Widget>[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle!,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Colors.white54,
+                          letterSpacing: 0.4,
+                        ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -127,7 +175,7 @@ class _StatTile extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
-                color: const Color(0xFF2CFF7B).withOpacity(0.18),
+                color: const Color(0xFF2CFF7B).withValues(alpha: 0.18),
                 border: Border.all(color: const Color(0xFF2CFF7B), width: 1.0),
               ),
               child: Text(

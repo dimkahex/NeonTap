@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LocalStats {
   static const String _kBestScore = 'best_score';
   static const String _kBestCombo = 'best_combo';
+  static const String _kTotalRuns = 'total_runs';
 
   static Future<(int bestScore, int bestCombo)> getBest() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -32,6 +33,14 @@ class LocalStats {
     }
 
     return (nextBestScore, nextBestCombo, newBestScore);
+  }
+
+  /// Increments completed-run counter; returns new total (this run’s index).
+  static Future<int> incrementTotalRuns() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final int n = (prefs.getInt(_kTotalRuns) ?? 0) + 1;
+    await prefs.setInt(_kTotalRuns, n);
+    return n;
   }
 }
 
