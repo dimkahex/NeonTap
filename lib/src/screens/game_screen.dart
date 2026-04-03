@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../app_version.dart';
 import '../game/difficulty.dart';
 import '../game/judgement.dart';
 import '../game/run_result.dart';
@@ -13,6 +14,7 @@ import '../ui/neon_background.dart';
 import '../ui/neon_circle_painter.dart';
 import '../ui/floating_points_overlay.dart';
 import '../ui/particles_overlay.dart';
+import '../ui/ring_guide_painter.dart';
 import '../ui/spiral_overlay.dart';
 import 'results_screen.dart';
 
@@ -31,6 +33,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   static const double _ringHalfWidthPx = 30;
   /// Decorative spiral "eye" — if the ring is far out, tapping the eye is a miss.
   static const double _voidEyePx = 16;
+  /// Ring aim + spiral visible early (was 150 — too long to notice in a short run).
+  static const int _ringAimMinScore = 35;
+  static const int _driftMinScore = 70;
 
   late AnimationController _shrink;
   late AnimationController _pulse;
@@ -117,8 +122,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final double tapDist = (tapPos - center).distance;
     final double r = _currentRadius;
 
-    // From mid-game: must tap ON the shrinking ring (timing + aim), not anywhere.
-    final bool ringAim = _score >= 150;
+    // Ring aim: tap must land on the current ring (not anywhere on screen).
+    final bool ringAim = _score >= _ringAimMinScore;
     if (ringAim) {
       final double delta = (tapDist - r).abs();
       if (delta > _ringHalfWidthPx) {
@@ -194,8 +199,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void _updateDrift() {
-    // Drift starts later to keep early game clean.
-    if (_score < 150) {
+    if (_score < _driftMinScore) {
       if (_centerOffset.value != Offset.zero) _centerOffset.value = Offset.zero;
       return;
     }
@@ -261,15 +265,21 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     Navigator.of(context).pushReplacementNamed(ResultsScreen.route, arguments: result);
   }
 
+  /// Spiral visible from the first frame; intensity ramps with score.
+  double _spiralIntensityForScore(int s) {
+    if (s < 40) return 0.20;
+    if (s < 120) return 0.38;
+    if (s < 250) return 0.55;
+    if (s < 400) return 0.78;
+    return 0.95;
+  }
+
   @override
   Widget build(BuildContext context) {
     final Difficulty d = difficultyForScore(_score);
     final bool distract = d.pulseDistract;
-    final double spiralIntensity = switch (_score) {
-      < 150 => 0.0,
-      < 400 => 0.45,
-      _ => 0.95,
-    };
+    final double spiralIntensity = _spiralIntensityForScore(_score);
+    final bool ringAim = _score >= _ringAimMinScore;
 
     return Scaffold(
       body: NeonBackground(
@@ -282,7 +292,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               Positioned.fill(
                 child: SpiralOverlay(
                   centerOffset: _centerOffset,
-                  enabled: _score >= 150,
+                  enabled: true,
                   intensity: spiralIntensity,
                   score: _score,
                 ),
@@ -293,15 +303,30 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   builder: (BuildContext context, _) {
                     final double r = _currentRadius;
                     final double hitScale = 1.0 + (0.035 * (1.0 - Curves.easeOut.transform(_hitPulse.value)));
-                    return CustomPaint(
-                      painter: NeonCirclePainter(
-                        radius: r * hitScale,
-                        maxRadius: _maxRadius,
-                        pulse: distract ? _pulse.value : 0,
-                        missFlash: _missFlash.value,
-                        centerOffset: _centerOffset.value,
-                      ),
-                      child: const SizedBox.expand(),
+                    final double rr = r * hitScale;
+                    return Stack(
+                      children: <Widget>[
+                        if (ringAim)
+                          CustomPaint(
+                            painter: RingGuidePainter(
+                              centerOffset: _centerOffset.value,
+                              ringRadius: rr,
+                              halfWidth: _ringHalfWidthPx,
+                              opacity: 1.0,
+                            ),
+                            child: const SizedBox.expand(),
+                          ),
+                        CustomPaint(
+                          painter: NeonCirclePainter(
+                            radius: rr,
+                            maxRadius: _maxRadius,
+                            pulse: distract ? _pulse.value : 0,
+                            missFlash: _missFlash.value,
+                            centerOffset: _centerOffset.value,
+                          ),
+                          child: const SizedBox.expand(),
+                        ),
+                      ],
                     );
                   },
                 ),
@@ -312,17 +337,47 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 top: 14,
                 left: 16,
                 right: 16,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          _score.toString(),
+                          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.4,
+                              ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: <Widget>[
+                            Text(
+                              kAppVersion,
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Colors.white38,
+                                    letterSpacing: 0.8,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            _RankRisingBadge(score: _score),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                     Text(
-                      _score.toString(),
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.4,
+                      ringAim
+                          ? 'AIM: tap on the ring (not empty space)'
+                          : 'Warm-up — ring aim starts soon',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: ringAim ? const Color(0xFF35E6FF) : Colors.white54,
+                            letterSpacing: 0.6,
+                            fontWeight: FontWeight.w600,
                           ),
                     ),
-                    _RankRisingBadge(score: _score),
                   ],
                 ),
               ),

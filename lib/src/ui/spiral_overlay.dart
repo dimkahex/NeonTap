@@ -28,7 +28,8 @@ class _SpiralOverlayState extends State<SpiralOverlay> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600))..repeat();
+    // Slightly slower loop = fewer repaints per second for the same smoothness feel.
+    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 3400))..repeat();
   }
 
   @override
@@ -42,25 +43,29 @@ class _SpiralOverlayState extends State<SpiralOverlay> with SingleTickerProvider
     if (!widget.enabled || widget.intensity <= 0) return const SizedBox.shrink();
     final SpiralTheme theme = SpiralTheme.forScore(widget.score);
     return IgnorePointer(
-      child: AnimatedBuilder(
-        animation: Listenable.merge(<Listenable>[_c, widget.centerOffset]),
-        builder: (BuildContext context, _) {
-          return CustomPaint(
-            painter: _HypnoticSpiralPainter(
-              phase: _c.value,
-              centerOffset: widget.centerOffset.value,
-              intensity: widget.intensity,
-              theme: theme,
-            ),
-            size: Size.infinite,
-          );
-        },
+      child: RepaintBoundary(
+        child: AnimatedBuilder(
+          animation: Listenable.merge(<Listenable>[_c, widget.centerOffset]),
+          builder: (BuildContext context, _) {
+            return CustomPaint(
+              isComplex: true,
+              willChange: true,
+              painter: _HypnoticSpiralPainter(
+                phase: _c.value,
+                centerOffset: widget.centerOffset.value,
+                intensity: widget.intensity,
+                theme: theme,
+              ),
+              size: Size.infinite,
+            );
+          },
+        ),
       ),
     );
   }
 }
 
-/// Hypnotic vortex: alternating dark / neon bands along a spiral (reference-style).
+/// Hypnotic vortex — kept lightweight: few segments, no blur filters, reused [Paint].
 class _HypnoticSpiralPainter extends CustomPainter {
   _HypnoticSpiralPainter({
     required this.phase,
@@ -79,7 +84,6 @@ class _HypnoticSpiralPainter extends CustomPainter {
     final Offset c = Offset(size.width / 2, size.height / 2) + centerOffset;
     final double maxR = math.min(size.width, size.height) * 0.58;
 
-    // Slight vignette
     final Rect bounds = Offset.zero & size;
     final Paint vignette = Paint()
       ..shader = RadialGradient(
@@ -97,13 +101,12 @@ class _HypnoticSpiralPainter extends CustomPainter {
     canvas.drawRect(bounds, vignette);
 
     final double rot = phase * math.pi * 2 * (0.55 + 0.65 * intensity);
-    final double turns = 8.0 + 7.0 * intensity + theme.tier * 0.8;
+    final double turns = 7.0 + 6.0 * intensity + theme.tier * 0.6;
     final double thetaMax = math.pi * 2 * turns;
 
     final double a = 6.0;
     final double b = (maxR - a) / thetaMax;
 
-    // "Eye" void — small dark core (decorative; gameplay uses separate ring logic)
     final double voidR = 14.0 + 4.0 * intensity;
     canvas.drawCircle(
       c,
@@ -111,8 +114,13 @@ class _HypnoticSpiralPainter extends CustomPainter {
       Paint()..color = const Color(0xFF020308),
     );
 
-    final int steps = (950 + 650 * intensity + theme.tier * 120).round();
+    // Was ~950–1600 segments/frame — kills mobile GPU. Cap for smooth 60fps.
+    final int steps = (160 + 110 * intensity + theme.tier * 18).clamp(120, 300).round();
     final double twist = rot * 1.15;
+
+    final Paint seg = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
     for (int i = 0; i < steps; i++) {
       final double t0 = i / steps;
@@ -129,31 +137,31 @@ class _HypnoticSpiralPainter extends CustomPainter {
       final Offset p0 = c + Offset(math.cos(ang0), math.sin(ang0)) * r0;
       final Offset p1 = c + Offset(math.cos(ang1), math.sin(ang1)) * r1;
 
-      // Band index → alternating primary vs near-black (reference: blue/black stripes)
       final double bandPhase = (th0 / (math.pi * 0.42)) + phase * 6.2 + theme.tier * 1.7;
       final bool darkBand = (bandPhase.floor() & 1) == 0;
 
       final Color base = darkBand ? theme.secondary : theme.primary;
-      // Fake "3D" rib: modulate lightness along the strip
       final double rib = 0.55 + 0.45 * math.sin(th0 * 0.35 + phase * math.pi * 2);
       final Color strokeColor = Color.lerp(base, theme.glow, darkBand ? 0.0 : 0.22 * rib)!.withOpacity(
         darkBand ? (0.22 + 0.12 * intensity) : (0.42 + 0.18 * intensity),
       );
 
-      final Paint seg = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = (2.0 + 2.8 * intensity + theme.tier * 0.35) * (darkBand ? 0.85 : 1.05)
-        ..strokeCap = StrokeCap.round
-        ..color = strokeColor;
-
+      seg
+        ..color = strokeColor
+        ..strokeWidth = (2.0 + 2.4 * intensity + theme.tier * 0.3) * (darkBand ? 0.85 : 1.05);
       canvas.drawLine(p0, p1, seg);
     }
 
-    // Soft neon bloom on top
+    // Soft rim without MaskFilter.blur (blur was the main GPU cost here).
     final Paint glow = Paint()
-      ..color = theme.glow.withOpacity(0.04 + 0.06 * intensity)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 18 + 22 * intensity);
-    canvas.drawCircle(c, maxR * 0.92, glow);
+      ..shader = RadialGradient(
+        colors: <Color>[
+          theme.glow.withOpacity(0.14 + 0.10 * intensity),
+          Colors.transparent,
+        ],
+        stops: const <double>[0.35, 1.0],
+      ).createShader(Rect.fromCircle(center: c, radius: maxR * 0.95));
+    canvas.drawCircle(c, maxR * 0.95, glow);
   }
 
   @override
