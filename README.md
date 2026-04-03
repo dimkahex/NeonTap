@@ -21,6 +21,14 @@ Phase 1 focuses on **offline core gameplay** + **base UI** with online foundatio
 ## Local storage
 - Best score / best combo: `SharedPreferences`
 
+## Версии и APK (CI)
+Версия задаётся в `pubspec.yaml`: строка `version: X.Y.Z+B` — **X.Y.Z** имя релиза, **B** номер сборки.
+
+После успешного **Android APK (Release)** в артефакте лежат файлы вида:
+`NeonPulse-vX.Y.Z-bB-arm64-v8a.apk` (и отдельно `armeabi-v7a`, `x86_64`).
+
+Перед новой публичной сборкой увеличь **+1** в `version` (например `0.2.0+2` → `0.2.0+3` или `0.3.0+1`).
+
 ## Containerized Android build (CI-friendly)
 This repo includes a Docker image setup for building an Android APK in a reproducible environment.
 
