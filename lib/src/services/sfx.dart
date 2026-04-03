@@ -6,12 +6,22 @@ class Sfx {
   Sfx._();
 
   static final AudioPlayer _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+  static final AudioPlayer _tapPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
 
-  // Assets are optional in Phase 1. We try to play them if present;
-  // missing assets shouldn't crash the run.
-  static Future<void> playJudgement(HitJudgement j) async {
+  /// Short feedback on every tap (does not block hit/miss sounds).
+  static Future<void> playTap() async {
+    try {
+      await _tapPlayer.play(AssetSource('sfx/tap_soft.wav'));
+    } catch (_) {
+      // ignore (optional asset)
+    }
+  }
+
+  /// After a successful hit (good/ok/perfect/ultra).
+  static Future<void> playHit(HitJudgement j) async {
     final String asset = switch (j) {
-      HitJudgement.ultra => 'sfx/ultra_bass.wav',
+      // User request: best hit uses "perfect" SFX.
+      HitJudgement.ultra => 'sfx/perfect_hit.wav',
       HitJudgement.perfect => 'sfx/perfect_hit.wav',
       HitJudgement.good => 'sfx/good_tick.wav',
       HitJudgement.ok => 'sfx/ok_click.wav',
@@ -20,7 +30,23 @@ class Sfx {
     try {
       await _player.play(AssetSource(asset));
     } catch (_) {
-      // ignore (assets not added yet)
+      // ignore
+    }
+  }
+
+  /// Legacy: full judgement (tap + hit combined flow uses playTap + playHit).
+  static Future<void> playJudgement(HitJudgement j) async => playHit(j);
+
+  /// Run over / loss.
+  static Future<void> playDefeat() async {
+    try {
+      await _player.play(AssetSource('sfx/defeat.wav'));
+    } catch (_) {
+      try {
+        await _player.play(AssetSource('sfx/miss_error.wav'));
+      } catch (_) {
+        // ignore
+      }
     }
   }
 
@@ -35,9 +61,9 @@ class Sfx {
   static Future<void> stop() async {
     try {
       await _player.stop();
+      await _tapPlayer.stop();
     } catch (_) {
       // ignore
     }
   }
 }
-

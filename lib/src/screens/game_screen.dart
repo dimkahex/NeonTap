@@ -27,7 +27,10 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   static const double _maxRadius = 270;
-  static const double _tapLeniencyPx = 22;
+  /// Half-width of the "ring" band — tap must land on the shrinking circle (not random screen tap).
+  static const double _ringHalfWidthPx = 30;
+  /// Decorative spiral "eye" — if the ring is far out, tapping the eye is a miss.
+  static const double _voidEyePx = 16;
 
   late AnimationController _shrink;
   late AnimationController _pulse;
@@ -108,15 +111,25 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _handleTap(Offset tapPos, Size screenSize) async {
-    // Mechanical difficulty: from mid-game, center drifts AND tap must hit the circle.
+    await Sfx.playTap();
+
     final Offset center = Offset(screenSize.width / 2, screenSize.height / 2) + _centerOffset.value;
     final double tapDist = (tapPos - center).distance;
     final double r = _currentRadius;
 
-    final bool requireHit = _score >= 150;
-    if (requireHit && tapDist > (r + _tapLeniencyPx)) {
-      await _handleJudgement(HitJudgement.miss);
-      return;
+    // From mid-game: must tap ON the shrinking ring (timing + aim), not anywhere.
+    final bool ringAim = _score >= 150;
+    if (ringAim) {
+      final double delta = (tapDist - r).abs();
+      if (delta > _ringHalfWidthPx) {
+        await _handleJudgement(HitJudgement.miss);
+        return;
+      }
+      // Spiral eye: if ring is far from center, tapping the empty middle is not a hit.
+      if (r > 52 && tapDist < _voidEyePx) {
+        await _handleJudgement(HitJudgement.miss);
+        return;
+      }
     }
 
     final HitJudgement j = _judge(r);
@@ -136,7 +149,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
     await Future.wait(<Future<void>>[
       Haptics.forJudgement(j),
-      Sfx.playJudgement(j),
+      if (j != HitJudgement.miss) Sfx.playHit(j) else Sfx.playDefeat(),
     ]);
 
     if (!mounted) return;
@@ -271,6 +284,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   centerOffset: _centerOffset,
                   enabled: _score >= 150,
                   intensity: spiralIntensity,
+                  score: _score,
                 ),
               ),
               Positioned.fill(
