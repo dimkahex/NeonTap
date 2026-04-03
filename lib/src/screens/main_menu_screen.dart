@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_version.dart';
 import '../ui/neon_background.dart';
 import '../ui/neon_button.dart';
-import 'arena_screen.dart';
+import 'leaderboard_screen.dart';
 import 'game_screen.dart';
 import 'profile_screen.dart';
 import 'versus_screen.dart';
@@ -47,10 +47,10 @@ class MainMenuScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               NeonButton(
-                label: 'ARENA',
-                subtitle: 'LIVE TOP-100 + Challenge #1',
-                icon: Icons.public,
-                onPressed: () => Navigator.of(context).pushNamed(ArenaScreen.route),
+                label: 'РЕЙТИНГ',
+                subtitle: 'Локально сейчас • глобал и друзья после Firebase',
+                icon: Icons.leaderboard,
+                onPressed: () => Navigator.of(context).pushNamed(LeaderboardScreen.route),
               ),
               const SizedBox(height: 12),
               NeonButton(
@@ -77,7 +77,7 @@ class MainMenuScreen extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Phase 1: Offline core • Firebase guest auth wired',
+                'Рейтинг: сейчас локально • облако — в финале',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.white54,

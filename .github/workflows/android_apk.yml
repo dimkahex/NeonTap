@@ -72,10 +72,11 @@ jobs:
           OUT="build/versioned-apk"
           mkdir -p "$OUT"
           SRC="build/app/outputs/flutter-apk/app-release.apk"
-          dst="NeonPulse-v${VER_NAME}-b${BUILD_NUM}.apk"
+          # Unique per workflow run (even if pubspec was not bumped between pushes).
+          dst="NeonPulse-v${VER_NAME}-b${BUILD_NUM}-r${GITHUB_RUN_NUMBER}.apk"
           cp "$SRC" "${OUT}/${dst}"
           ls -lah "${OUT}/${dst}"
-          echo "VERSION_TAG=v${VER_NAME}-b${BUILD_NUM}" >> "$GITHUB_ENV"
+          echo "VERSION_TAG=v${VER_NAME}-b${BUILD_NUM}-r${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
 
       - name: Gradle stacktrace (only if Flutter build failed)
         if: failure()
@@ -88,7 +89,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: neon_pulse_online-apk-${{ env.VERSION_TAG }}
+          name: neon_pulse_online-apk-${{ github.run_number }}
           path: |
             build/versioned-apk/*.apk
 

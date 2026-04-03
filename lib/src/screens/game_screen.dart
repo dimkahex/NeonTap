@@ -9,6 +9,7 @@ import '../game/judgement.dart';
 import '../game/run_result.dart';
 import '../game/run_stats.dart';
 import '../services/haptics.dart';
+import '../services/leaderboard_service.dart';
 import '../services/local_stats.dart';
 import '../services/sfx.dart';
 import '../ui/neon_background.dart';
@@ -331,6 +332,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
     final (int bestScore, int bestComboStored, bool newBest) =
         await LocalStats.updateBestIfNeeded(score: _score, bestCombo: bestCombo);
+
+    unawaited(
+      LeaderboardService.syncBestFromLocal(
+        bestScore: bestScore,
+        bestCombo: bestComboStored,
+      ),
+    );
 
     final int lifetimeRun = await LocalStats.incrementTotalRuns();
 

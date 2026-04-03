@@ -1,0 +1,212 @@
+import 'dart:math';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
+
+import '../config/online_config.dart';
+import '../models/leaderboard_entry.dart';
+import 'leaderboard_service.dart';
+
+/// Friend codes + `users/{uid}/friends/{friendUid}`.
+class FriendsService {
+  FriendsService._();
+
+  static const String _chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+  static Future<void> _ensureAuth() async {
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp();
+      }
+      if (FirebaseAuth.instance.currentUser == null) {
+        await FirebaseAuth.instance.signInAnonymously();
+      }
+    } catch (_) {}
+  }
+
+  static bool get _ready {
+    try {
+      return Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static String? get _myUid => FirebaseAuth.instance.currentUser?.uid;
+
+  /// Creates and stores a unique 6-char code if missing.
+  static Future<String?> ensureFriendCode() async {
+    if (!kFirebaseOnlineFeaturesEnabled) {
+      return null;
+    }
+    await _ensureAuth();
+    if (!_ready) {
+      return null;
+    }
+    final String uid = _myUid!;
+    final DatabaseReference mine = FirebaseDatabase.instance.ref('users/$uid/friendCode');
+    final DataSnapshot existing = await mine.get();
+    if (existing.exists && existing.value is String) {
+      return existing.value! as String;
+    }
+
+    final Random rnd = Random.secure();
+    for (int attempt = 0; attempt < 40; attempt++) {
+      final String code = List<String>.generate(
+        6,
+        (_) => _chars[rnd.nextInt(_chars.length)],
+      ).join();
+      final DatabaseReference codeRef = FirebaseDatabase.instance.ref('friendCodes/$code');
+      final DataSnapshot taken = await codeRef.get();
+      if (taken.exists) {
+        continue;
+      }
+      await codeRef.set(<String, String>{'uid': uid});
+      await mine.set(code);
+      return code;
+    }
+    return null;
+  }
+
+  /// Returns `null` on success, or an error message.
+  static Future<String?> addFriendByCode(String raw) async {
+    if (!kFirebaseOnlineFeaturesEnabled) {
+      return 'Друзья по коду — после включения Firebase (online_config.dart)';
+    }
+    await _ensureAuth();
+    if (!_ready) {
+      return 'Нет сети или Firebase';
+    }
+    final String? myUid = _myUid;
+    if (myUid == null) {
+      return 'Нет аккаунта';
+    }
+    final String code = raw.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
+    if (code.length != 6) {
+      return 'Нужен ровно 6-символьный код';
+    }
+    final DataSnapshot snap = await FirebaseDatabase.instance.ref('friendCodes/$code').get();
+    if (!snap.exists || snap.value is! Map) {
+      return 'Код не найден';
+    }
+    final Map<Object?, Object?> m = snap.value! as Map<Object?, Object?>;
+    final String? friendUid = m['uid'] as String?;
+    if (friendUid == null || friendUid.isEmpty) {
+      return 'Неверные данные';
+    }
+    if (friendUid == myUid) {
+      return 'Это ваш код';
+    }
+    await FirebaseDatabase.instance.ref('users/$myUid/friends/$friendUid').set(true);
+    return null;
+  }
+
+  static Future<List<String>> listFriendUids() async {
+    if (!kFirebaseOnlineFeaturesEnabled) {
+      return <String>[];
+    }
+    await _ensureAuth();
+    if (!_ready) {
+      return <String>[];
+    }
+    final String? myUid = _myUid;
+    if (myUid == null) {
+      return <String>[];
+    }
+    final DataSnapshot friendsSnap = await FirebaseDatabase.instance.ref('users/$myUid/friends').get();
+    final List<String> out = <String>[];
+    if (friendsSnap.value is Map) {
+      final Map<Object?, Object?> fm = friendsSnap.value! as Map<Object?, Object?>;
+      fm.forEach((Object? k, Object? v) {
+        if (v == true && k != null) {
+          out.add(k.toString());
+        }
+      });
+    }
+    return out;
+  }
+
+  static Future<void> removeFriend(String friendUid) async {
+    if (!kFirebaseOnlineFeaturesEnabled) {
+      return;
+    }
+    await _ensureAuth();
+    final String? myUid = _myUid;
+    if (!_ready || myUid == null) {
+      return;
+    }
+    await FirebaseDatabase.instance.ref('users/$myUid/friends/$friendUid').remove();
+  }
+
+  /// Имя из `leaderboard/global` для экрана профиля.
+  static Future<String> displayNameForUid(String uid) async {
+    if (!kFirebaseOnlineFeaturesEnabled) {
+      return uid;
+    }
+    await _ensureAuth();
+    if (!_ready) {
+      return uid;
+    }
+    final DataSnapshot snap = await FirebaseDatabase.instance.ref('leaderboard/global/$uid').get();
+    if (!snap.exists || snap.value is! Map) {
+      return uid;
+    }
+    final Map<Object?, Object?> m = snap.value! as Map<Object?, Object?>;
+    final Object? dn = m['displayName'];
+    if (dn is String && dn.trim().isNotEmpty) {
+      return dn.trim();
+    }
+    return uid;
+  }
+
+  /// Sorted by score desc; includes self + friends with rows in `leaderboard/global`.
+  static Future<List<LeaderboardEntry>> loadFriendsBoard() async {
+    if (!kFirebaseOnlineFeaturesEnabled) {
+      return LeaderboardService.loadLocalGlobalLeaderboard();
+    }
+    await _ensureAuth();
+    if (!_ready) {
+      return <LeaderboardEntry>[];
+    }
+    final String? myUid = _myUid;
+    if (myUid == null) {
+      return <LeaderboardEntry>[];
+    }
+    final Set<String> uids = <String>{myUid};
+    final DataSnapshot friendsSnap = await FirebaseDatabase.instance.ref('users/$myUid/friends').get();
+    if (friendsSnap.value is Map) {
+      final Map<Object?, Object?> fm = friendsSnap.value! as Map<Object?, Object?>;
+      fm.forEach((Object? k, Object? v) {
+        if (v == true && k != null) {
+          uids.add(k.toString());
+        }
+      });
+    }
+
+    final List<LeaderboardEntry> rows = <LeaderboardEntry>[];
+    for (final String id in uids) {
+      final DataSnapshot row = await FirebaseDatabase.instance.ref('leaderboard/global/$id').get();
+      if (row.exists && row.value is Map) {
+        final Map<Object?, Object?> vm = Map<Object?, Object?>.from(row.value! as Map);
+        rows.add(
+          LeaderboardEntry.fromSnapshotMap(id, vm).copyWith(
+            isMe: id == myUid,
+          ),
+        );
+      } else {
+        rows.add(
+          LeaderboardEntry(
+            uid: id,
+            displayName: id == myUid ? 'Вы' : 'Нет в таблице',
+            score: 0,
+            bestCombo: 1,
+            isMe: id == myUid,
+          ),
+        );
+      }
+    }
+    rows.sort((LeaderboardEntry a, LeaderboardEntry b) => b.score.compareTo(a.score));
+    return rows;
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "rules": {
+    "leaderboard": {
+      "global": {
+        ".indexOn": "score",
+        "$uid": {
+          ".read": true,
+          ".write": "auth != null && auth.uid == $uid",
+          ".validate": "newData.hasChildren(['score', 'updatedAt']) && newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 999999999 && newData.child('updatedAt').isNumber() && (!newData.hasChild('displayName') || newData.child('displayName').isString()) && (!newData.hasChild('bestCombo') || newData.child('bestCombo').isNumber())"
+        }
+      }
+    },
+    "friendCodes": {
+      "$code": {
+        ".read": true,
+        ".write": "auth != null && newData.child('uid').val() == auth.uid && (!data.exists() || data.child('uid').val() == auth.uid)"
+      }
+    },
+    "users": {
+      "$uid": {
+        "friendCode": {
+          ".read": true,
+          ".write": "auth != null && auth.uid == $uid"
+        },
+        "friends": {
+          "$friendUid": {
+            ".read": "auth != null && auth.uid == $uid",
+            ".write": "auth != null && auth.uid == $uid",
+            ".validate": "newData.isBoolean() && newData.val() == true"
+          }
+        }
+      }
+    }
+  }
+}
