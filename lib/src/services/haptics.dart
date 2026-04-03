@@ -15,6 +15,8 @@ class Haptics {
       case HitJudgement.ok:
         return HapticFeedback.selectionClick();
       case HitJudgement.graze:
+      case HitJudgement.rim:
+      case HitJudgement.edge:
         return HapticFeedback.selectionClick();
       case HitJudgement.miss:
         return HapticFeedback.vibrate();

@@ -32,8 +32,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   static const double _maxRadius = 270;
   /// Half-width of the "ring" band — tap must land on the shrinking circle (not random screen tap).
   static const double _ringHalfWidthPx = 30;
-  /// Outer graze band — wider, minimal points ([HitJudgement.graze]).
-  static const double _ringWideHalfWidthPx = 52;
+  /// Outer edges of scoring shells (|tap radius − ring|) — graze / rim / edge (minimal points).
+  static const double _bandGrazeOuterPx = 52;
+  static const double _bandRimOuterPx = 72;
+  static const double _bandEdgeOuterPx = 92;
   /// Decorative spiral "eye" — if the ring is far out, tapping the eye is a miss.
   static const double _voidEyePx = 16;
   /// Ring aim + spiral visible early (was 150 — too long to notice in a short run).
@@ -59,6 +61,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   int _hitsGood = 0;
   int _hitsOk = 0;
   int _hitsGraze = 0;
+  int _hitsRim = 0;
+  int _hitsEdge = 0;
 
   String? _bigText;
   double _bigTextScale = 1;
@@ -68,19 +72,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   bool _slowMo = false;
   Timer? _slowMoTimer;
 
-  /// Spiral rotation follows shrink cycle with easing — visually aligned with the ring.
-  late final Animation<double> _spiralPhaseSmooth;
-
   double _bonusScoreMul = 1.0;
   Timer? _bonusTimer;
 
   @override
   void initState() {
     super.initState();
-    _shrink = AnimationController(vsync: this, duration: const Duration(milliseconds: 3000))
+    final int firstMs = (difficultyForScore(0).shrinkSeconds * 1000).round();
+    _shrink = AnimationController(vsync: this, duration: Duration(milliseconds: firstMs))
       ..addStatusListener(_onShrinkStatus)
       ..forward();
-    _spiralPhaseSmooth = CurvedAnimation(parent: _shrink, curve: Curves.easeInOutCubic);
     _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..repeat();
     _missFlash = AnimationController(vsync: this, duration: const Duration(milliseconds: 180));
     _hitPulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 140));
@@ -142,7 +143,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final bool ringAim = _score >= _ringAimMinScore;
     if (ringAim) {
       final double delta = (tapDist - r).abs();
-      if (delta > _ringWideHalfWidthPx) {
+      if (delta > _bandEdgeOuterPx) {
         await _handleJudgement(HitJudgement.miss);
         return;
       }
@@ -155,7 +156,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         await _handleJudgement(HitJudgement.miss);
         return;
       }
-      final HitJudgement j = delta > _ringHalfWidthPx ? HitJudgement.graze : timing;
+      final HitJudgement j;
+      if (delta <= _ringHalfWidthPx) {
+        j = timing;
+      } else if (delta <= _bandGrazeOuterPx) {
+        j = HitJudgement.graze;
+      } else if (delta <= _bandRimOuterPx) {
+        j = HitJudgement.rim;
+      } else {
+        j = HitJudgement.edge;
+      }
       await _handleJudgement(j);
       return;
     }
@@ -187,6 +197,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       HitJudgement.good => 1.05,
       HitJudgement.ok => 0.9,
       HitJudgement.graze => 0.82,
+      HitJudgement.rim => 0.78,
+      HitJudgement.edge => 0.74,
       HitJudgement.miss => 0.95,
     };
     emitParticleEvent(_particleEvents, j, seed, intensity: intensity);
@@ -201,7 +213,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     switch (j) {
       case HitJudgement.ultra:
         _hitsUltra++;
-        _comboPow = (_comboPow + 1).clamp(0, 4);
+        final int comboCap = difficultyForScore(_score).comboMaxPow;
+        _comboPow = (_comboPow + 1).clamp(0, comboCap);
         _bestComboPow = math.max(_bestComboPow, _comboPow);
         final int add = (j.basePoints * _comboMultiplier * _bonusScoreMul).round();
         emitFloatingPoints(_floatingPoints, value: add, j: j, seed: seed);
@@ -218,6 +231,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       case HitJudgement.good:
       case HitJudgement.ok:
       case HitJudgement.graze:
+      case HitJudgement.rim:
+      case HitJudgement.edge:
         if (j == HitJudgement.perfect) {
           _hitsPerfect++;
         } else if (j == HitJudgement.good) {
@@ -226,8 +241,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           _hitsOk++;
         } else if (j == HitJudgement.graze) {
           _hitsGraze++;
+        } else if (j == HitJudgement.rim) {
+          _hitsRim++;
+        } else if (j == HitJudgement.edge) {
+          _hitsEdge++;
         }
-        _comboPow = (_comboPow + 1).clamp(0, 4);
+        final int comboCap = difficultyForScore(_score).comboMaxPow;
+        _comboPow = (_comboPow + 1).clamp(0, comboCap);
         _bestComboPow = math.max(_bestComboPow, _comboPow);
         final int add = (j.basePoints * _comboMultiplier * _bonusScoreMul).round();
         emitFloatingPoints(_floatingPoints, value: add, j: j, seed: seed);
@@ -236,6 +256,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           j.label,
           scale: switch (j) {
             HitJudgement.graze => 0.94,
+            HitJudgement.rim => 0.91,
+            HitJudgement.edge => 0.88,
             HitJudgement.ok => 1.02,
             _ => 1.08,
           },
@@ -321,6 +343,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       good: _hitsGood,
       ok: _hitsOk,
       graze: _hitsGraze,
+      rim: _hitsRim,
+      edge: _hitsEdge,
     );
 
     final RunResult result = RunResult(
@@ -369,7 +393,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             children: <Widget>[
               Positioned.fill(
                 child: SpiralOverlay(
-                  shrinkSmoothPhase: _spiralPhaseSmooth,
                   centerOffset: _centerOffset,
                   enabled: true,
                   intensity: spiralIntensity,
@@ -391,7 +414,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               centerOffset: _centerOffset.value,
                               ringRadius: rr,
                               halfWidth: _ringHalfWidthPx,
-                              wideHalfWidth: _ringWideHalfWidthPx,
+                              bandGrazeOuter: _bandGrazeOuterPx,
+                              bandRimOuter: _bandRimOuterPx,
+                              bandEdgeOuter: _bandEdgeOuterPx,
                               opacity: 1.0,
                             ),
                             child: const SizedBox.expand(),
@@ -459,7 +484,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     const SizedBox(height: 8),
                     Text(
                       ringAim
-                          ? 'AIM: inner ring = full score; outer dim band = GRAZE (1pt)'
+                          ? 'AIM: inner ring = full score; outer shells = GRAZE / RIM / EDGE (1pt each)'
                           : 'Warm-up — ring aim starts soon',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: ringAim ? const Color(0xFF35E6FF) : Colors.white54,
@@ -508,7 +533,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       ],
                     ),
                     Text(
-                      '${d.shrinkSeconds.toStringAsFixed(2)}s',
+                      'Stage ${d.stage} · ${d.shrinkSeconds.toStringAsFixed(2)}s',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.white54,
                             letterSpacing: 0.6,

@@ -1,35 +1,54 @@
 import 'package:flutter/material.dart';
 
-/// Highlights the valid tap band (ring) when "aim mode" is active.
-/// Optional [wideHalfWidth] draws a faint outer graze band (wider tolerance).
+/// Highlights tap bands: tight ring + several wide scoring shells (GRAZE / RIM / EDGE).
 class RingGuidePainter extends CustomPainter {
   RingGuidePainter({
     required this.centerOffset,
     required this.ringRadius,
     required this.halfWidth,
     required this.opacity,
-    this.wideHalfWidth,
+    required this.bandGrazeOuter,
+    required this.bandRimOuter,
+    required this.bandEdgeOuter,
   });
 
   final Offset centerOffset;
   final double ringRadius;
   final double halfWidth;
   final double opacity;
-  /// If larger than [halfWidth], draws an extra dim outer ring (GRAZE zone).
-  final double? wideHalfWidth;
+  final double bandGrazeOuter;
+  final double bandRimOuter;
+  final double bandEdgeOuter;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (opacity <= 0) return;
     final Offset c = Offset(size.width / 2, size.height / 2) + centerOffset;
+    final double r = ringRadius;
 
-    final double? wide = wideHalfWidth;
-    if (wide != null && wide > halfWidth + 0.5) {
+    void strokePair(double outer, double alphaMul, Color color) {
+      final Paint p = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4
+        ..color = color.withValues(alpha: alphaMul * opacity);
+      final double inR = r - outer;
+      if (inR > 2) {
+        canvas.drawCircle(c, inR, p);
+      }
+      canvas.drawCircle(c, r + outer, p);
+    }
+
+    // Outermost shells first (dimmer).
+    strokePair(bandEdgeOuter, 0.10, const Color(0xFF90A4AE));
+    strokePair(bandRimOuter, 0.12, const Color(0xFF78909C));
+    strokePair(bandGrazeOuter, 0.14, const Color(0xFF78909C));
+
+    if (bandGrazeOuter > halfWidth + 0.5) {
       final Paint wideBand = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = (wide - halfWidth) * 2
-        ..color = const Color(0xFF78909C).withValues(alpha: 0.12 * opacity);
-      canvas.drawCircle(c, ringRadius, wideBand);
+        ..strokeWidth = (bandGrazeOuter - halfWidth) * 2
+        ..color = const Color(0xFF78909C).withValues(alpha: 0.10 * opacity);
+      canvas.drawCircle(c, r, wideBand);
     }
 
     final Paint band = Paint()
@@ -37,13 +56,13 @@ class RingGuidePainter extends CustomPainter {
       ..strokeWidth = halfWidth * 2
       ..color = const Color(0xFF35E6FF).withValues(alpha: 0.18 * opacity);
 
-    canvas.drawCircle(c, ringRadius, band);
+    canvas.drawCircle(c, r, band);
 
     final Paint edge = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2
       ..color = Colors.white.withValues(alpha: 0.45 * opacity);
-    canvas.drawCircle(c, ringRadius, edge);
+    canvas.drawCircle(c, r, edge);
   }
 
   @override
@@ -52,6 +71,8 @@ class RingGuidePainter extends CustomPainter {
         oldDelegate.ringRadius != ringRadius ||
         oldDelegate.halfWidth != halfWidth ||
         oldDelegate.opacity != opacity ||
-        oldDelegate.wideHalfWidth != wideHalfWidth;
+        oldDelegate.bandGrazeOuter != bandGrazeOuter ||
+        oldDelegate.bandRimOuter != bandRimOuter ||
+        oldDelegate.bandEdgeOuter != bandEdgeOuter;
   }
 }

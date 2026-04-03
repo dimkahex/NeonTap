@@ -66,6 +66,8 @@ class _ParticlesOverlayState extends State<ParticlesOverlay> with SingleTickerPr
         HitJudgement.good => Colors.orangeAccent,
         HitJudgement.ok => Colors.white70,
         HitJudgement.graze => const Color(0xFF9E9E9E),
+        HitJudgement.rim => const Color(0xFF6D8A96),
+        HitJudgement.edge => const Color(0xFF5C6B73),
         HitJudgement.miss => Colors.redAccent,
       };
 }

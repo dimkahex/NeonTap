@@ -9,6 +9,8 @@ class JudgementBreakdown {
     this.good = 0,
     this.ok = 0,
     this.graze = 0,
+    this.rim = 0,
+    this.edge = 0,
   });
 
   final int ultra;
@@ -16,8 +18,10 @@ class JudgementBreakdown {
   final int good;
   final int ok;
   final int graze;
+  final int rim;
+  final int edge;
 
-  int get totalHits => ultra + perfect + good + ok + graze;
+  int get totalHits => ultra + perfect + good + ok + graze + rim + edge;
 
   /// One miss ends the run — used for a simple accuracy readout.
   double get accuracyPercent => totalHits <= 0 ? 0 : (100.0 * totalHits / (totalHits + 1));

@@ -102,7 +102,7 @@ class ResultsScreen extends StatelessWidget {
 }
 
 String _breakdownLine(JudgementBreakdown b) {
-  return 'ULTRA ${b.ultra}  PERF ${b.perfect}  GOOD ${b.good}  OK ${b.ok}  GRAZE ${b.graze}';
+  return 'U ${b.ultra}  P ${b.perfect}  G ${b.good}  OK ${b.ok}  GZ ${b.graze}  RIM ${b.rim}  EDGE ${b.edge}';
 }
 
 class _StatTile extends StatelessWidget {
