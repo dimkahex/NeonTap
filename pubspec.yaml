@@ -2,7 +2,8 @@ name: neon_pulse_online
 description: "Ultra-minimalist neon timing game with online hooks (Phase 1: offline core)."
 publish_to: "none"
 
-version: 0.1.0+1
+# name+b: bump +1 for each release build (visible in APK filenames from CI).
+version: 0.2.0+2
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
