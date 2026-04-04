@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../app_version.dart';
 import '../ui/neon_background.dart';
 import '../ui/neon_button.dart';
@@ -15,6 +16,7 @@ class MainMenuScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: NeonBackground(
         child: Padding(
@@ -24,7 +26,7 @@ class MainMenuScreen extends StatelessWidget {
             children: <Widget>[
               const SizedBox(height: 10),
               Text(
-                'NEON PULSE',
+                l10n.appTitle,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                       letterSpacing: 2.2,
@@ -32,7 +34,7 @@ class MainMenuScreen extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'One tap. Pure skill.',
+                l10n.taglineOneTap,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: Colors.white70,
                       letterSpacing: 1.4,
@@ -40,29 +42,29 @@ class MainMenuScreen extends StatelessWidget {
               ),
               const SizedBox(height: 22),
               NeonButton(
-                label: 'PLAY',
-                subtitle: 'Instant run — chase your best score',
+                label: l10n.menuPlay,
+                subtitle: l10n.menuPlaySubtitle,
                 icon: Icons.play_arrow,
                 onPressed: () => Navigator.of(context).pushNamed(GameScreen.route),
               ),
               const SizedBox(height: 12),
               NeonButton(
-                label: 'РЕЙТИНГ',
-                subtitle: 'Локально сейчас • глобал и друзья после Firebase',
+                label: l10n.menuLeaderboard,
+                subtitle: l10n.menuLeaderboardSubtitle,
                 icon: Icons.leaderboard,
                 onPressed: () => Navigator.of(context).pushNamed(LeaderboardScreen.route),
               ),
               const SizedBox(height: 12),
               NeonButton(
-                label: 'VERSUS',
-                subtitle: 'Revenge a friend — code-based duels',
+                label: l10n.menuVersus,
+                subtitle: l10n.menuVersusSubtitle,
                 icon: Icons.sports_mma,
                 onPressed: () => Navigator.of(context).pushNamed(VersusScreen.route),
               ),
               const SizedBox(height: 12),
               NeonButton(
-                label: 'PROFILE',
-                subtitle: 'Stats • Achievements • Share card',
+                label: l10n.menuProfile,
+                subtitle: l10n.menuProfileSubtitle,
                 icon: Icons.person,
                 onPressed: () => Navigator.of(context).pushNamed(ProfileScreen.route),
               ),
@@ -77,7 +79,7 @@ class MainMenuScreen extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Рейтинг: сейчас локально • облако — в финале',
+                l10n.menuFooterRankings,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.white54,

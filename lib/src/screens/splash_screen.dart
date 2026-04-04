@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../ui/neon_background.dart';
 import 'main_menu_screen.dart';
 
@@ -42,6 +43,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: NeonBackground(
         child: Center(
@@ -51,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Text(
-                  'NEON PULSE',
+                  l10n.appTitle,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.w900,
@@ -60,7 +62,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'GLOBAL COMPETITION',
+                  l10n.splashGlobalCompetition,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: Colors.white70,
                         letterSpacing: 2.2,

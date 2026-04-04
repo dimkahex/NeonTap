@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../app_version.dart';
 import '../game/difficulty.dart';
 import '../game/judgement.dart';
@@ -13,6 +14,7 @@ import '../services/leaderboard_service.dart';
 import '../services/local_stats.dart';
 import '../services/sfx.dart';
 import '../services/challenge_service.dart';
+import '../l10n_ext/hit_judgement_l10n.dart';
 import '../ui/neon_background.dart';
 import '../ui/neon_circle_painter.dart';
 import '../ui/floating_points_overlay.dart';
@@ -192,6 +194,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _handleJudgement(HitJudgement j) async {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final int seed = DateTime.now().microsecondsSinceEpoch & 0x7fffffff;
     final double intensity = switch (j) {
       HitJudgement.ultra => 1.55,
@@ -221,7 +224,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         final int add = (j.basePoints * _comboMultiplier * _bonusScoreMul).round();
         emitFloatingPoints(_floatingPoints, value: add, j: j, seed: seed);
         _hitPulse.forward(from: 0);
-        _showBigText(j.label, scale: 1.16, glow: true);
+        _showBigText(j.locLabel(l10n), scale: 1.16, glow: true);
         _slowMoFor(const Duration(seconds: 5));
         await Future<void>.delayed(const Duration(milliseconds: 120));
         if (!mounted) return;
@@ -255,7 +258,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         emitFloatingPoints(_floatingPoints, value: add, j: j, seed: seed);
         _hitPulse.forward(from: 0);
         _showBigText(
-          j.label,
+          j.locLabel(l10n),
           scale: switch (j) {
             HitJudgement.graze => 0.94,
             HitJudgement.rim => 0.91,
@@ -273,7 +276,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         return;
       case HitJudgement.miss:
         _comboPow = 0;
-        _showBigText(j.label, scale: 1.0, glow: false);
+        _showBigText(j.locLabel(l10n), scale: 1.0, glow: false);
         _missFlash.forward(from: 0);
         await Future<void>.delayed(const Duration(milliseconds: 180));
         if (!mounted) return;
@@ -387,6 +390,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final Difficulty d = difficultyForScore(_score);
     final bool distract = d.pulseDistract;
     final double spiralIntensity = _spiralIntensityForScore(_score);
@@ -458,7 +462,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 left: 8,
                 child: IconButton(
                   icon: const Icon(Icons.close, color: Colors.white54),
-                  tooltip: 'End run',
+                  tooltip: l10n.gameEndRunTooltip,
                   onPressed: () => unawaited(_exitToResults()),
                 ),
               ),
@@ -498,9 +502,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      ringAim
-                          ? 'AIM: inner ring = full score; outer shells = GRAZE / RIM / EDGE (1pt each)'
-                          : 'Warm-up — ring aim starts soon',
+                      ringAim ? l10n.gameAimHint : l10n.gameWarmupHint,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: ringAim ? const Color(0xFF35E6FF) : Colors.white54,
                             letterSpacing: 0.6,
@@ -536,7 +538,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               color: const Color(0x22FFE082),
                             ),
                             child: Text(
-                              'SCORE x2',
+                              l10n.gameScoreX2,
                               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                     color: const Color(0xFFFFE082),
                                     fontWeight: FontWeight.w900,
@@ -548,7 +550,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       ],
                     ),
                     Text(
-                      'Stage ${d.stage} · ${d.shrinkSeconds.toStringAsFixed(2)}s',
+                      l10n.gameStage(d.stage, d.shrinkSeconds.toStringAsFixed(2)),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.white54,
                             letterSpacing: 0.6,
@@ -597,6 +599,7 @@ class _RankRisingBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final bool show = score == 50 || score == 150 || score == 400;
     if (!show) return const SizedBox(width: 0, height: 0);
     return Container(
@@ -607,7 +610,7 @@ class _RankRisingBadge extends StatelessWidget {
         color: Colors.black.withOpacity(0.25),
       ),
       child: Text(
-        'RANK RISING!',
+        l10n.gameRankRising,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w800,
               letterSpacing: 1.6,

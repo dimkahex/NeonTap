@@ -5,18 +5,6 @@ enum ChallengeDuration {
 }
 
 extension ChallengeDurationUi on ChallengeDuration {
-  String get label => switch (this) {
-        ChallengeDuration.day1 => '1 day',
-        ChallengeDuration.day2 => '2 days',
-        ChallengeDuration.week1 => '1 week',
-      };
-
-  String get labelRu => switch (this) {
-        ChallengeDuration.day1 => '1 день',
-        ChallengeDuration.day2 => '2 дня',
-        ChallengeDuration.week1 => '1 неделя',
-      };
-
   Duration get duration => switch (this) {
         ChallengeDuration.day1 => const Duration(days: 1),
         ChallengeDuration.day2 => const Duration(days: 2),

@@ -54,7 +54,7 @@ class ChallengeService {
     final String fromUid = _myUid!;
     final String fromName = await PlayerPrefs.getDisplayName();
     final String toNameResolved = await FriendsService.displayNameForUid(toUid);
-    final String toName = toNameResolved == toUid ? 'Игрок' : toNameResolved;
+    final String toName = toNameResolved == toUid ? 'Player' : toNameResolved;
     final int createdAt = _nowMs();
     final int endsAt = createdAt + duration.duration.inMilliseconds;
 

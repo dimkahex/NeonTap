@@ -12,6 +12,12 @@ import 'leaderboard_service.dart';
 class FriendsService {
   FriendsService._();
 
+  /// Placeholder [LeaderboardEntry.displayName] for the current user (localize in UI).
+  static const String kLeaderboardYouMarker = '__L10N_YOU__';
+
+  /// Placeholder when a friend has no row in `leaderboard/global` (localize in UI).
+  static const String kLeaderboardMissingMarker = '__L10N_NOT_IN_BOARD__';
+
   static const String _chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
   static Future<void> _ensureAuth() async {
@@ -69,34 +75,34 @@ class FriendsService {
     return null;
   }
 
-  /// Returns `null` on success, or an error message.
-  static Future<String?> addFriendByCode(String raw) async {
+  /// Returns `null` on success.
+  static Future<FriendAddError?> addFriendByCode(String raw) async {
     if (!kFirebaseOnlineFeaturesEnabled) {
-      return 'Друзья по коду — после включения Firebase (online_config.dart)';
+      return FriendAddError.firebaseDisabled;
     }
     await _ensureAuth();
     if (!_ready) {
-      return 'Нет сети или Firebase';
+      return FriendAddError.notReady;
     }
     final String? myUid = _myUid;
     if (myUid == null) {
-      return 'Нет аккаунта';
+      return FriendAddError.noAccount;
     }
     final String code = raw.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
     if (code.length != 6) {
-      return 'Нужен ровно 6-символьный код';
+      return FriendAddError.invalidLength;
     }
     final DataSnapshot snap = await FirebaseDatabase.instance.ref('friendCodes/$code').get();
     if (!snap.exists || snap.value is! Map) {
-      return 'Код не найден';
+      return FriendAddError.notFound;
     }
     final Map<Object?, Object?> m = snap.value! as Map<Object?, Object?>;
     final String? friendUid = m['uid'] as String?;
     if (friendUid == null || friendUid.isEmpty) {
-      return 'Неверные данные';
+      return FriendAddError.badData;
     }
     if (friendUid == myUid) {
-      return 'Это ваш код';
+      return FriendAddError.ownCode;
     }
     await FirebaseDatabase.instance.ref('users/$myUid/friends/$friendUid').set(true);
     return null;
@@ -218,7 +224,7 @@ class FriendsService {
         rows.add(
           LeaderboardEntry(
             uid: id,
-            displayName: id == myUid ? 'Вы' : 'Нет в таблице',
+            displayName: id == myUid ? kLeaderboardYouMarker : kLeaderboardMissingMarker,
             score: 0,
             bestCombo: 1,
             isMe: id == myUid,
@@ -229,4 +235,14 @@ class FriendsService {
     rows.sort((LeaderboardEntry a, LeaderboardEntry b) => b.score.compareTo(a.score));
     return rows;
   }
+}
+
+enum FriendAddError {
+  firebaseDisabled,
+  notReady,
+  noAccount,
+  invalidLength,
+  notFound,
+  badData,
+  ownCode,
 }

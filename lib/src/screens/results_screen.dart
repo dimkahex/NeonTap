@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../game/run_result.dart';
 import '../game/run_stats.dart';
 import '../ui/neon_background.dart';
@@ -13,6 +14,7 @@ class ResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final Object? args = ModalRoute.of(context)?.settings.arguments;
     final RunResult r = args is RunResult
         ? args
@@ -35,7 +37,7 @@ class ResultsScreen extends StatelessWidget {
             children: <Widget>[
               const SizedBox(height: 8),
               Text(
-                r.score == 0 ? 'DEFEAT' : 'RUN OVER',
+                r.score == 0 ? l10n.resultsDefeat : l10n.resultsRunOver,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w900,
@@ -43,55 +45,55 @@ class ResultsScreen extends StatelessWidget {
                     ),
               ),
               const SizedBox(height: 16),
-              _StatTile(label: 'FINAL SCORE', value: r.score.toString()),
+              _StatTile(label: l10n.resultsFinalScore, value: r.score.toString()),
               const SizedBox(height: 10),
               if (r.lifetimeRunIndex > 0)
                 _StatTile(
-                  label: 'RUN #',
+                  label: l10n.resultsRunNumber,
                   value: r.lifetimeRunIndex.toString(),
                 ),
               if (r.lifetimeRunIndex > 0) const SizedBox(height: 10),
               _StatTile(
-                label: 'ACCURACY',
+                label: l10n.resultsAccuracy,
                 value: '${r.breakdown.accuracyPercent.toStringAsFixed(1)}%',
-                subtitle: '${r.breakdown.totalHits} hits',
+                subtitle: l10n.resultsHits(r.breakdown.totalHits),
               ),
               const SizedBox(height: 10),
               _StatTile(
-                label: 'HIT BREAKDOWN',
-                value: _breakdownLine(r.breakdown),
+                label: l10n.resultsHitBreakdown,
+                value: _breakdownLine(l10n, r.breakdown),
                 small: true,
               ),
               const SizedBox(height: 10),
-              _StatTile(label: 'BEST COMBO', value: 'x${r.bestCombo}'),
+              _StatTile(label: l10n.resultsBestCombo, value: 'x${r.bestCombo}'),
               const SizedBox(height: 10),
               _StatTile(
-                label: 'BEST SCORE',
+                label: l10n.resultsBestScore,
                 value: r.bestScore.toString(),
-                badge: r.isNewBestScore ? 'NEW BEST' : null,
+                badge: r.isNewBestScore ? l10n.resultsNewBest : null,
               ),
               const SizedBox(height: 10),
-              _StatTile(label: 'RANK ESTIMATE', value: '#${r.rankEstimate}'),
+              _StatTile(label: l10n.resultsRankEstimate, value: '#${r.rankEstimate}'),
               const Spacer(),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pushReplacementNamed(GameScreen.route),
-                child: const Text('PLAY AGAIN'),
+                child: Text(l10n.resultsPlayAgain),
               ),
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () {
                   // Phase 1: placeholder share text.
-                  final String text = 'Я набрал ${r.score} в NEON PULSE!';
+                  final String text = l10n.resultsShareSnackbar(r.score);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(text)),
                   );
                 },
-                child: const Text('SHARE'),
+                child: Text(l10n.resultsShare),
               ),
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pushReplacementNamed(MainMenuScreen.route),
-                child: const Text('MENU'),
+                child: Text(l10n.resultsMenu),
               ),
             ],
           ),
@@ -101,8 +103,8 @@ class ResultsScreen extends StatelessWidget {
   }
 }
 
-String _breakdownLine(JudgementBreakdown b) {
-  return 'U ${b.ultra}  P ${b.perfect}  G ${b.good}  OK ${b.ok}  GZ ${b.graze}  RIM ${b.rim}  EDGE ${b.edge}';
+String _breakdownLine(AppLocalizations l10n, JudgementBreakdown b) {
+  return l10n.resultsBreakdown(b.ultra, b.perfect, b.good, b.ok, b.graze, b.rim, b.edge);
 }
 
 class _StatTile extends StatelessWidget {

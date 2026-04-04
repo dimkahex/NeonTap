@@ -3,9 +3,13 @@ import 'dart:async' show unawaited;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../config/online_config.dart';
 import '../services/friends_service.dart';
 import '../services/leaderboard_service.dart';
+import '../locale/app_locale_scope.dart';
+import '../locale/locale_controller.dart';
+import '../l10n_ext/friend_add_error_l10n.dart';
 import '../services/player_prefs.dart';
 import '../ui/neon_background.dart';
 
@@ -65,22 +69,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Имя сохранено')),
+      SnackBar(content: Text(AppLocalizations.of(context)!.snackNameSaved)),
     );
   }
 
   Future<void> _addFriendTap() async {
-    final String? err = await FriendsService.addFriendByCode(_addFriend.text);
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final FriendAddError? err = await FriendsService.addFriendByCode(_addFriend.text);
     if (!mounted) {
       return;
     }
     if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err.message(l10n))));
       return;
     }
     _addFriend.clear();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Друг добавлен')),
+      SnackBar(content: Text(l10n.snackFriendAdded)),
     );
     await _load();
   }
@@ -95,8 +100,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final LocaleController locale = AppLocaleScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('ПРОФИЛЬ')),
+      appBar: AppBar(title: Text(l10n.profileTitle)),
       body: NeonBackground(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -104,7 +111,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.all(18),
                 children: <Widget>[
                   Text(
-                    'ИМЯ В ТАБЛИЦЕ',
+                    l10n.profileLanguage,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          letterSpacing: 1.2,
+                          color: Colors.white70,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  SegmentedButton<String>(
+                    segments: <ButtonSegment<String>>[
+                      ButtonSegment<String>(
+                        value: 'ru',
+                        label: Text(l10n.profileLanguageRu),
+                      ),
+                      ButtonSegment<String>(
+                        value: 'en',
+                        label: Text(l10n.profileLanguageEn),
+                      ),
+                    ],
+                    selected: <String>{locale.locale.languageCode},
+                    onSelectionChanged: (Set<String> next) {
+                      unawaited(locale.setLanguageCode(next.first));
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    l10n.profileNameInTable,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           letterSpacing: 1.2,
                           color: Colors.white70,
@@ -114,28 +146,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   TextField(
                     controller: _name,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: 'Как вас видят другие',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: l10n.profileNameHint,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: _saveName,
-                    child: const Text('СОХРАНИТЬ ИМЯ'),
+                    child: Text(l10n.profileSaveName),
                   ),
                   if (!kFirebaseOnlineFeaturesEnabled) ...<Widget>[
                     const SizedBox(height: 16),
                     Text(
-                      'Сейчас всё только на этом устройстве. Облако и общий рейтинг — когда поставите '
-                      'kFirebaseOnlineFeaturesEnabled = true и настроите Firebase.',
+                      l10n.profileOfflineFirebaseNote,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
                     ),
                   ],
                   const SizedBox(height: 28),
                   if (kFirebaseOnlineFeaturesEnabled) ...<Widget>[
                     Text(
-                      'ВАШ КОД ДРУГА',
+                      l10n.profileYourFriendCode,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             letterSpacing: 1.2,
                             color: Colors.white70,
@@ -155,13 +186,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.copy, color: Color(0xFF35E6FF)),
-                          tooltip: 'Копировать',
+                          tooltip: l10n.profileCopyCode,
                           onPressed: _friendCode == null
                               ? null
                               : () {
                                   Clipboard.setData(ClipboardData(text: _friendCode!));
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Код скопирован')),
+                                    SnackBar(content: Text(l10n.profileCodeCopied)),
                                   );
                                 },
                         ),
@@ -169,12 +200,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Передайте код другу — он введёт его ниже у себя.',
+                      l10n.profileFriendCodeHint,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
                     ),
                     const SizedBox(height: 28),
                     Text(
-                      'ДОБАВИТЬ ДРУГА',
+                      l10n.profileAddFriend,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             letterSpacing: 1.2,
                             color: Colors.white70,
@@ -189,22 +220,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             controller: _addFriend,
                             style: const TextStyle(color: Colors.white),
                             textCapitalization: TextCapitalization.characters,
-                            decoration: const InputDecoration(
-                              hintText: '6-символьный код',
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              hintText: l10n.profileFriendCodeFieldHint,
+                              border: const OutlineInputBorder(),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: _addFriendTap,
-                          child: const Text('OK'),
+                          child: Text(l10n.profileOk),
                         ),
                       ],
                     ),
                     const SizedBox(height: 28),
                     Text(
-                      'ДРУЗЬЯ',
+                      l10n.profileFriends,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             letterSpacing: 1.2,
                             color: Colors.white70,
@@ -213,7 +244,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 8),
                     if (_friends.isEmpty)
                       Text(
-                        'Пока никого — добавьте по коду.',
+                        l10n.profileFriendsEmpty,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white54),
                       )
                     else
@@ -229,14 +260,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                   ] else
                     Text(
-                      'Код друга и список друзей появятся после включения Firebase '
-                      '(см. lib/src/config/online_config.dart).',
+                      l10n.profileFirebaseLaterNote,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white54),
                     ),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).maybePop(),
-                    child: const Text('НАЗАД'),
+                    child: Text(l10n.profileBack),
                   ),
                 ],
               ),

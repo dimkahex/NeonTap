@@ -1,0 +1,173 @@
+{
+  "@@locale": "en",
+  "appTitle": "NEON PULSE",
+  "taglineOneTap": "One tap. Pure skill.",
+  "menuPlay": "PLAY",
+  "menuPlaySubtitle": "Instant run — chase your best score",
+  "menuLeaderboard": "LEADERBOARD",
+  "menuLeaderboardSubtitle": "Local now • global & friends with Firebase",
+  "menuVersus": "VERSUS",
+  "menuVersusSubtitle": "Revenge a friend — code-based duels",
+  "menuProfile": "PROFILE",
+  "menuProfileSubtitle": "Stats • Achievements • Share card",
+  "menuFooterRankings": "Rankings: local now • cloud in the final build",
+  "splashGlobalCompetition": "GLOBAL COMPETITION",
+  "gameEndRunTooltip": "End run",
+  "gameAimHint": "AIM: inner ring = full score; outer shells = GRAZE / RIM / EDGE (1pt each)",
+  "gameWarmupHint": "Warm-up — ring aim starts soon",
+  "gameScoreX2": "SCORE x2",
+  "gameStage": "Stage {stage} · {seconds}s",
+  "@gameStage": {
+    "placeholders": {
+      "stage": {"type": "int"},
+      "seconds": {"type": "String"}
+    }
+  },
+  "gameRankRising": "RANK RISING!",
+  "judgementGraze": "GRAZE",
+  "judgementRim": "RIM",
+  "judgementEdge": "EDGE",
+  "judgementOk": "OK",
+  "judgementUltra": "ULTRA",
+  "judgementPerfect": "PERFECT",
+  "judgementGood": "GOOD",
+  "judgementMiss": "MISS",
+  "resultsDefeat": "DEFEAT",
+  "resultsRunOver": "RUN OVER",
+  "resultsFinalScore": "FINAL SCORE",
+  "resultsRunNumber": "RUN #",
+  "resultsAccuracy": "ACCURACY",
+  "resultsHits": "{count} hits",
+  "@resultsHits": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "resultsHitBreakdown": "HIT BREAKDOWN",
+  "resultsBreakdown": "U {u}  P {p}  G {g}  OK {ok}  GZ {gz}  RIM {rim}  EDGE {edge}",
+  "@resultsBreakdown": {
+    "placeholders": {
+      "u": {"type": "int"},
+      "p": {"type": "int"},
+      "g": {"type": "int"},
+      "ok": {"type": "int"},
+      "gz": {"type": "int"},
+      "rim": {"type": "int"},
+      "edge": {"type": "int"}
+    }
+  },
+  "resultsBestCombo": "BEST COMBO",
+  "resultsBestScore": "BEST SCORE",
+  "resultsNewBest": "NEW BEST",
+  "resultsRankEstimate": "RANK ESTIMATE",
+  "resultsPlayAgain": "PLAY AGAIN",
+  "resultsShare": "SHARE",
+  "resultsShareSnackbar": "I scored {score} in NEON PULSE!",
+  "@resultsShareSnackbar": {
+    "placeholders": {
+      "score": {"type": "int"}
+    }
+  },
+  "resultsMenu": "MENU",
+  "leaderboardTitle": "LEADERBOARD",
+  "leaderboardGlobalTab": "GLOBAL",
+  "leaderboardFriendsTab": "FRIENDS",
+  "leaderboardOfflineBanner": "Offline: only your scores on this device. Global board — after Firebase.",
+  "leaderboardLoadError": "Could not load the table.\nCheck Firebase and RTDB rules.",
+  "leaderboardEmptyGlobal": "No entries yet — play and improve your best score.",
+  "leaderboardEmptyLocal": "Play a run — your best score will appear here.",
+  "leaderboardErrorGeneric": "Error: {error}",
+  "@leaderboardErrorGeneric": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "leaderboardFriendsEmpty": "Add friends by code in Profile — your scores and their bests will show here.",
+  "leaderboardComboLine": "x{combo} combo",
+  "@leaderboardComboLine": {
+    "placeholders": {
+      "combo": {"type": "int"}
+    }
+  },
+  "leaderboardYouSuffix": " (you)",
+  "profileTitle": "PROFILE",
+  "profileNameInTable": "NAME ON LEADERBOARD",
+  "profileNameHint": "How others see you",
+  "profileSaveName": "SAVE NAME",
+  "profileOfflineFirebaseNote": "Everything is local on this device for now. Cloud and global board — when you set kFirebaseOnlineFeaturesEnabled = true and configure Firebase.",
+  "profileYourFriendCode": "YOUR FRIEND CODE",
+  "profileCopyCode": "Copy",
+  "profileCodeCopied": "Code copied",
+  "profileFriendCodeHint": "Share this code — your friend enters it below on their device.",
+  "profileAddFriend": "ADD FRIEND",
+  "profileFriendCodeFieldHint": "6-character code",
+  "profileOk": "OK",
+  "profileFriends": "FRIENDS",
+  "profileFriendsEmpty": "No one yet — add by code.",
+  "profileBack": "BACK",
+  "profileFirebaseLaterNote": "Friend code and list appear after Firebase is enabled (see lib/src/config/online_config.dart).",
+  "profileLanguage": "LANGUAGE",
+  "profileLanguageRu": "Русский",
+  "profileLanguageEn": "English",
+  "versusTitle": "VERSUS",
+  "versusHeadline": "REVENGE A FRIEND",
+  "versusBody": "Async challenges: pick a friend and a time window.\nYour best single run in the window counts.",
+  "versusOpenChallenges": "OPEN CHALLENGES",
+  "versusBack": "BACK",
+  "challengesTitle": "CHALLENGES",
+  "challengesNewTooltip": "New challenge",
+  "challengesFirebaseDisabled": "Player vs player challenges unlock after Firebase.\n\nSet kFirebaseOnlineFeaturesEnabled = true\nand follow firebase/README.md",
+  "challengesEmpty": "No challenges yet.\nTap + to send one to a friend.",
+  "challengeVersus": "{from} vs {to}",
+  "@challengeVersus": {
+    "placeholders": {
+      "from": {"type": "String"},
+      "to": {"type": "String"}
+    }
+  },
+  "challengeStatusPending": "PENDING",
+  "challengeStatusActive": "ACTIVE",
+  "challengeStatusFinishing": "FINISHING",
+  "challengeStatusCompleted": "COMPLETED",
+  "challengeStatusDeclined": "DECLINED",
+  "challengeStatusCancelled": "CANCELLED",
+  "challengeEnds": "Ends: {when}",
+  "@challengeEnds": {
+    "placeholders": {
+      "when": {"type": "String"}
+    }
+  },
+  "challengeAccept": "ACCEPT",
+  "challengeDecline": "DECLINE",
+  "challengeCancel": "CANCEL",
+  "challengeRiskArm": "RISK ×1.25",
+  "challengeRiskDisarm": "DISARM RISK",
+  "challengeRiskHint": "Risk: once per player — next run can be ×1.25 (0 stays 0, risk is consumed).",
+  "challengeRiskReady": "READY",
+  "challengeRiskUsed": "RISK USED",
+  "createChallengeTitle": "NEW CHALLENGE",
+  "createChallengeFriendCode": "FRIEND CODE",
+  "createChallengeHint6": "6 characters",
+  "createChallengeDuration": "DURATION",
+  "createChallengeSend": "SEND",
+  "createChallengeBusy": "...",
+  "createChallengeRuleHint": "Rule: your best single run in the window counts. Risk round: once you can arm ×1.25 for the next run.",
+  "createChallengeCodeNotFound": "Code not found",
+  "createChallengeFailed": "Could not create challenge",
+  "createChallengeSent": "Challenge sent",
+  "snackNameSaved": "Name saved",
+  "snackFriendAdded": "Friend added",
+  "friendErrorFirebaseDisabled": "Friends by code — after Firebase is enabled (online_config.dart)",
+  "friendErrorNotReady": "No network or Firebase",
+  "friendErrorNoAccount": "No account",
+  "friendErrorInvalidLength": "Code must be exactly 6 characters",
+  "friendErrorNotFound": "Code not found",
+  "friendErrorBadData": "Invalid data",
+  "friendErrorOwnCode": "That is your code",
+  "leaderboardNameYou": "You",
+  "leaderboardNameNotInTable": "Not on leaderboard",
+  "defaultPlayerName": "Player",
+  "durationDay1": "1 day",
+  "durationDay2": "2 days",
+  "durationWeek1": "1 week"
+}

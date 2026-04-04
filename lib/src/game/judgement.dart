@@ -13,17 +13,6 @@ enum HitJudgement {
 }
 
 extension HitJudgementUi on HitJudgement {
-  String get label => switch (this) {
-        HitJudgement.graze => 'GRAZE',
-        HitJudgement.rim => 'RIM',
-        HitJudgement.edge => 'EDGE',
-        HitJudgement.ok => 'OK',
-        HitJudgement.ultra => 'ULTRA',
-        HitJudgement.perfect => 'PERFECT',
-        HitJudgement.good => 'GOOD',
-        HitJudgement.miss => 'MISS',
-      };
-
   int get basePoints => switch (this) {
         HitJudgement.graze => 1,
         HitJudgement.rim => 1,

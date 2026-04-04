@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../config/online_config.dart';
 import '../models/leaderboard_entry.dart';
 import '../services/friends_service.dart';
 import '../services/leaderboard_service.dart';
+import '../l10n_ext/leaderboard_name.dart';
 import '../ui/neon_background.dart';
 
 class LeaderboardScreen extends StatefulWidget {
@@ -32,14 +34,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('РЕЙТИНГ'),
+        title: Text(l10n.leaderboardTitle),
         bottom: TabBar(
           controller: _tabs,
-          tabs: const <Widget>[
-            Tab(text: 'ГЛОБАЛЬНЫЙ'),
-            Tab(text: 'ДРУЗЬЯ'),
+          tabs: <Widget>[
+            Tab(text: l10n.leaderboardGlobalTab),
+            Tab(text: l10n.leaderboardFriendsTab),
           ],
         ),
       ),
@@ -51,7 +54,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with SingleTicker
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                 child: Text(
-                  'Офлайн: только ваши результаты на устройстве. Общий рейтинг — после Firebase.',
+                  l10n.leaderboardOfflineBanner,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
                 ),
               ),
@@ -95,6 +98,7 @@ class _GlobalTabState extends State<_GlobalTab> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     if (kFirebaseOnlineFeaturesEnabled) {
       return StreamBuilder<List<LeaderboardEntry>>(
         stream: LeaderboardService.watchGlobalTop(limit: 100),
@@ -107,7 +111,7 @@ class _GlobalTabState extends State<_GlobalTab> {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Не удалось загрузить таблицу.\nПроверьте Firebase и правила RTDB.',
+                  l10n.leaderboardLoadError,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
                 ),
@@ -118,7 +122,7 @@ class _GlobalTabState extends State<_GlobalTab> {
           if (rows.isEmpty) {
             return Center(
               child: Text(
-                'Пока нет записей — сыграйте и улучшите лучший счёт.',
+                l10n.leaderboardEmptyGlobal,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
               ),
@@ -154,7 +158,7 @@ class _GlobalTabState extends State<_GlobalTab> {
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                    'Ошибка: ${snap.error}',
+                    l10n.leaderboardErrorGeneric(snap.error.toString()),
                     style: const TextStyle(color: Colors.white70),
                   ),
                 ),
@@ -170,7 +174,7 @@ class _GlobalTabState extends State<_GlobalTab> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Text(
-                    'Сыграйте партию — здесь появится ваш лучший счёт.',
+                    l10n.leaderboardEmptyLocal,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
                   ),
@@ -215,6 +219,7 @@ class _FriendsTabState extends State<_FriendsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return RefreshIndicator(
       onRefresh: () async {
         _reload();
@@ -233,7 +238,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                    'Ошибка: ${snap.error}',
+                    l10n.leaderboardErrorGeneric(snap.error.toString()),
                     style: const TextStyle(color: Colors.white70),
                   ),
                 ),
@@ -249,7 +254,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Text(
-                    'Добавьте друзей по коду в Профиле — здесь будут ваши очки и их лучшие результаты.',
+                    l10n.leaderboardFriendsEmpty,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
                   ),
@@ -280,7 +285,9 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final TextStyle? base = Theme.of(context).textTheme.titleMedium;
+    final String display = leaderboardDisplayName(l10n, entry);
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       leading: CircleAvatar(
@@ -294,11 +301,11 @@ class _Row extends StatelessWidget {
         ),
       ),
       title: Text(
-        '${entry.displayName}${entry.isMe ? '  (вы)' : ''}',
+        '$display${entry.isMe ? l10n.leaderboardYouSuffix : ''}',
         style: base?.copyWith(fontWeight: FontWeight.w700),
       ),
       subtitle: Text(
-        'x${entry.bestCombo} комбо',
+        l10n.leaderboardComboLine(entry.bestCombo),
         style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
       ),
       trailing: Text(

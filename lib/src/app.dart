@@ -1,8 +1,13 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../l10n/app_localizations.dart';
 import 'config/online_config.dart';
 import 'firebase/firebase_bootstrap.dart';
+import 'locale/app_locale_scope.dart';
+import 'locale/locale_controller.dart';
 import 'screens/leaderboard_screen.dart';
 import 'screens/challenges_screen.dart';
 import 'screens/game_screen.dart';
@@ -21,9 +26,12 @@ class NeonPulseApp extends StatefulWidget {
 }
 
 class _NeonPulseAppState extends State<NeonPulseApp> {
+  final LocaleController _locale = LocaleController();
+
   @override
   void initState() {
     super.initState();
+    unawaited(_locale.load());
     if (kFirebaseOnlineFeaturesEnabled) {
       FirebaseBootstrap.ensureGuestAuth();
     }
@@ -33,22 +41,35 @@ class _NeonPulseAppState extends State<NeonPulseApp> {
   Widget build(BuildContext context) {
     final TextTheme baseText = GoogleFonts.orbitronTextTheme(ThemeData.dark().textTheme);
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'NEON PULSE',
-      theme: buildNeonTheme(baseText),
-      initialRoute: SplashScreen.route,
-      routes: <String, WidgetBuilder>{
-        SplashScreen.route: (_) => const SplashScreen(),
-        MainMenuScreen.route: (_) => const MainMenuScreen(),
-        LeaderboardScreen.route: (_) => const LeaderboardScreen(),
-        ChallengesScreen.route: (_) => const ChallengesScreen(),
-        VersusScreen.route: (_) => const VersusScreen(),
-        GameScreen.route: (_) => const GameScreen(),
-        ResultsScreen.route: (_) => const ResultsScreen(),
-        ProfileScreen.route: (_) => const ProfileScreen(),
+    return ListenableBuilder(
+      listenable: _locale,
+      builder: (BuildContext context, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'NEON PULSE',
+          locale: _locale.locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildNeonTheme(baseText),
+          initialRoute: SplashScreen.route,
+          builder: (BuildContext context, Widget? child) {
+            return AppLocaleScope(
+              controller: _locale,
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
+          routes: <String, WidgetBuilder>{
+            SplashScreen.route: (_) => const SplashScreen(),
+            MainMenuScreen.route: (_) => const MainMenuScreen(),
+            LeaderboardScreen.route: (_) => const LeaderboardScreen(),
+            ChallengesScreen.route: (_) => const ChallengesScreen(),
+            VersusScreen.route: (_) => const VersusScreen(),
+            GameScreen.route: (_) => const GameScreen(),
+            ResultsScreen.route: (_) => const ResultsScreen(),
+            ProfileScreen.route: (_) => const ProfileScreen(),
+          },
+        );
       },
     );
   }
 }
-

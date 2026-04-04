@@ -3,9 +3,13 @@ import 'dart:async' show unawaited;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../config/online_config.dart';
 import '../models/challenge.dart';
 import '../services/challenge_service.dart';
+import '../l10n_ext/challenge_display_name.dart';
+import '../l10n_ext/challenge_duration_l10n.dart';
+import '../l10n_ext/friend_add_error_l10n.dart';
 import '../services/friends_service.dart';
 import '../ui/neon_background.dart';
 
@@ -21,13 +25,14 @@ class ChallengesScreen extends StatefulWidget {
 class _ChallengesScreenState extends State<ChallengesScreen> {
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ВЫЗОВЫ'),
+        title: Text(l10n.challengesTitle),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Новый вызов',
+            tooltip: l10n.challengesNewTooltip,
             onPressed: kFirebaseOnlineFeaturesEnabled
                 ? () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const _CreateChallengeSheet()))
                 : null,
@@ -40,9 +45,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                    'Вызовы между игроками включатся после Firebase.\n\n'
-                    'Поставьте kFirebaseOnlineFeaturesEnabled = true\n'
-                    'и выполните шаги из firebase/README.md',
+                    l10n.challengesFirebaseDisabled,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
                   ),
@@ -58,7 +61,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                   if (all.isEmpty) {
                     return Center(
                       child: Text(
-                        'Пока нет вызовов.\nНажмите + чтобы отправить другу.',
+                        l10n.challengesEmpty,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
                       ),
@@ -84,17 +87,21 @@ class _ChallengeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final bool over = c.isOver || c.status == ChallengeStatus.completed;
-    final String vs = '${c.fromName} vs ${c.toName}';
+    final String vs = l10n.challengeVersus(
+      challengePersonName(l10n, c.fromName),
+      challengePersonName(l10n, c.toName),
+    );
     final String status = switch (c.status) {
-      ChallengeStatus.pending => 'ОЖИДАЕТ',
-      ChallengeStatus.active => over ? 'ФИНИШ' : 'ИДЁТ',
-      ChallengeStatus.completed => 'ЗАВЕРШЁН',
-      ChallengeStatus.declined => 'ОТКЛОНЁН',
-      ChallengeStatus.cancelled => 'ОТМЕНЁН',
+      ChallengeStatus.pending => l10n.challengeStatusPending,
+      ChallengeStatus.active => over ? l10n.challengeStatusFinishing : l10n.challengeStatusActive,
+      ChallengeStatus.completed => l10n.challengeStatusCompleted,
+      ChallengeStatus.declined => l10n.challengeStatusDeclined,
+      ChallengeStatus.cancelled => l10n.challengeStatusCancelled,
     };
     final DateTime end = DateTime.fromMillisecondsSinceEpoch(c.endsAtMs);
-    final String endLine = 'До: ${end.toLocal().toString().split(".").first}';
+    final String endLine = l10n.challengeEnds(end.toLocal().toString().split('.').first);
 
     final String? uid = FirebaseAuth.instance.currentUser?.uid;
     final bool iAmFrom = uid != null && uid == c.fromUid;
@@ -136,9 +143,23 @@ class _ChallengeCard extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: <Widget>[
-                Expanded(child: _ScoreMini(name: c.fromName, score: c.fromBest, combo: c.fromBestCombo, riskUsed: c.fromRiskUsed)),
+                Expanded(
+                  child: _ScoreMini(
+                    name: challengePersonName(l10n, c.fromName),
+                    score: c.fromBest,
+                    combo: c.fromBestCombo,
+                    riskUsed: c.fromRiskUsed,
+                  ),
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: _ScoreMini(name: c.toName, score: c.toBest, combo: c.toBestCombo, riskUsed: c.toRiskUsed)),
+                Expanded(
+                  child: _ScoreMini(
+                    name: challengePersonName(l10n, c.toName),
+                    score: c.toBest,
+                    combo: c.toBestCombo,
+                    riskUsed: c.toRiskUsed,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -150,32 +171,32 @@ class _ChallengeCard extends StatelessWidget {
                 if (c.status == ChallengeStatus.pending && iAmTo) ...<Widget>[
                   ElevatedButton(
                     onPressed: () => unawaited(ChallengeService.accept(c.id)),
-                    child: const Text('ПРИНЯТЬ'),
+                    child: Text(l10n.challengeAccept),
                   ),
                   OutlinedButton(
                     onPressed: () => unawaited(ChallengeService.decline(c.id)),
-                    child: const Text('ОТКЛОНИТЬ'),
+                    child: Text(l10n.challengeDecline),
                   ),
                 ],
                 if (c.status == ChallengeStatus.pending && iAmFrom)
                   OutlinedButton(
                     onPressed: () => unawaited(ChallengeService.cancel(c.id)),
-                    child: const Text('ОТМЕНИТЬ'),
+                    child: Text(l10n.challengeCancel),
                   ),
                 if (canArmMyRisk) ...<Widget>[
                   OutlinedButton(
                     onPressed: () => unawaited(ChallengeService.armRisk(c.id, armed: true)),
-                    child: const Text('РИСК ×1.25'),
+                    child: Text(l10n.challengeRiskArm),
                   ),
                   OutlinedButton(
                     onPressed: () => unawaited(ChallengeService.armRisk(c.id, armed: false)),
-                    child: const Text('СБРОС РИСКА'),
+                    child: Text(l10n.challengeRiskDisarm),
                   ),
                 ],
               ],
             ),
             Text(
-              'Риск: один раз на игрока — следующий забег может дать ×1.25 (0 остаётся 0, риск сгорает).',
+              l10n.challengeRiskHint,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white38),
             ),
           ],
@@ -200,6 +221,7 @@ class _ScoreMini extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       decoration: BoxDecoration(
@@ -227,7 +249,7 @@ class _ScoreMini extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'x$combo  ${riskUsed ? 'РИСК ИСП.' : 'ГОТОВ'}',
+            'x$combo  ${riskUsed ? l10n.challengeRiskUsed : l10n.challengeRiskReady}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
           ),
         ],
@@ -255,12 +277,13 @@ class _CreateChallengeSheetState extends State<_CreateChallengeSheet> {
   }
 
   Future<void> _send() async {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     setState(() => _busy = true);
     try {
-      final String? err = await FriendsService.addFriendByCode(_code.text);
+      final FriendAddError? err = await FriendsService.addFriendByCode(_code.text);
       if (!mounted) return;
       if (err != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err.message(l10n))));
         return;
       }
       // Resolve friend uid by code (we already validated it above by reading friendCodes).
@@ -269,17 +292,17 @@ class _CreateChallengeSheetState extends State<_CreateChallengeSheet> {
       final String? uid = await FriendsService.resolveUidByCode(code);
       if (!mounted) return;
       if (uid == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Код не найден')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.createChallengeCodeNotFound)));
         return;
       }
       final String? id = await ChallengeService.createChallenge(toUid: uid, duration: _dur);
       if (!mounted) return;
       if (id == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Не удалось создать вызов')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.createChallengeFailed)));
         return;
       }
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Вызов отправлен')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.createChallengeSent)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -287,26 +310,27 @@ class _CreateChallengeSheetState extends State<_CreateChallengeSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('НОВЫЙ ВЫЗОВ')),
+      appBar: AppBar(title: Text(l10n.createChallengeTitle)),
       body: NeonBackground(
         child: ListView(
           padding: const EdgeInsets.all(18),
           children: <Widget>[
             Text(
-              'КОД ДРУГА',
+              l10n.createChallengeFriendCode,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70, letterSpacing: 1.2),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _code,
               textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: '6 символов'),
+              decoration: InputDecoration(border: const OutlineInputBorder(), hintText: l10n.createChallengeHint6),
               style: const TextStyle(color: Colors.white),
             ),
             const SizedBox(height: 18),
             Text(
-              'ДЛИТЕЛЬНОСТЬ',
+              l10n.createChallengeDuration,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70, letterSpacing: 1.2),
             ),
             const SizedBox(height: 8),
@@ -316,7 +340,7 @@ class _CreateChallengeSheetState extends State<_CreateChallengeSheet> {
               items: ChallengeDuration.values
                   .map(
                     (ChallengeDuration d) =>
-                        DropdownMenuItem<ChallengeDuration>(value: d, child: Text(d.labelRu)),
+                        DropdownMenuItem<ChallengeDuration>(value: d, child: Text(d.locLabel(l10n))),
                   )
                   .toList(),
               onChanged: (ChallengeDuration? v) {
@@ -327,11 +351,11 @@ class _CreateChallengeSheetState extends State<_CreateChallengeSheet> {
             const SizedBox(height: 18),
             ElevatedButton(
               onPressed: _busy ? null : _send,
-              child: Text(_busy ? '...' : 'ОТПРАВИТЬ'),
+              child: Text(_busy ? l10n.createChallengeBusy : l10n.createChallengeSend),
             ),
             const SizedBox(height: 10),
             Text(
-              'Правило: считается лучший один забег в окне. Risk round: один раз можно включить ×1.25 для следующего забега.',
+              l10n.createChallengeRuleHint,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
             ),
           ],
