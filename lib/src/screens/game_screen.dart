@@ -82,6 +82,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    unawaited(Sfx.onEnterGame());
     final int firstMs = (difficultyForScore(0).shrinkSeconds * 1000).round();
     _shrink = AnimationController(vsync: this, duration: Duration(milliseconds: firstMs))
       ..addStatusListener(_onShrinkStatus)
@@ -106,6 +107,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _drift.dispose();
     _centerOffset.dispose();
     Sfx.stop();
+    unawaited(Sfx.onLeaveGame());
     super.dispose();
   }
 

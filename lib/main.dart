@@ -7,7 +7,7 @@ import 'src/services/sfx.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Sfx.reloadFromPrefs();
+  await Sfx.reloadFromPrefs(allowStartBgm: false);
 
   await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
     DeviceOrientation.portraitUp,

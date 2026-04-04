@@ -1,12 +1,8 @@
-Place sound effects here (Phase 1 optional).
+Place sound effects here.
 
-Expected filenames (you can replace with any .wav/.mp3):
-- tap_soft.wav          (any tap)
-- perfect_hit.wav       (ultra + perfect hits — best tier)
-- good_tick.wav
-- ok_click.wav
-- miss_error.wav
-- defeat.wav            (run over)
-- whoosh_loop.wav
-- ultra_bass.wav        (optional legacy)
+Bundled in repo (replace freely):
+- tap_soft.wav, perfect_hit.wav, good_tick.wav, defeat.wav
+- ok_click.wav, miss_error.wav, whoosh_loop.wav — may be copies of good_tick until you swap for distinct SFX.
+
+Background music: ../music/fon.mp3 (looping on menu / meta; paused during a run).
 

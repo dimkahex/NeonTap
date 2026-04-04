@@ -4,7 +4,7 @@ publish_to: "none"
 
 # name+b: bump +1 before each push you want as a new Play Store / internal build (versionCode = B).
 # CI also appends -r<run> to the APK filename so every workflow run is unique.
-version: 0.2.0+12
+version: 0.2.0+13
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -41,3 +41,4 @@ flutter:
   assets:
     - assets/
     - assets/sfx/
+    - assets/music/

@@ -8,25 +8,85 @@ class Sfx {
 
   static final AudioPlayer _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
   static final AudioPlayer _tapPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+  static final AudioPlayer _musicPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.loop);
 
   static bool _soundEnabled = true;
   static double _volume01 = 1.0;
+  /// True while [GameScreen] is on top — background music is paused.
+  static bool _gameActive = false;
 
   /// Call from [main] and after changing sound settings.
-  static Future<void> reloadFromPrefs() async {
+  /// [allowStartBgm] — `false` at cold start so music does not play during splash; main menu calls [startBackgroundMusic].
+  static Future<void> reloadFromPrefs({bool allowStartBgm = true}) async {
     _soundEnabled = await SettingsPrefs.getSoundEnabled();
     final int p = await SettingsPrefs.getVolumePercent();
     _volume01 = (p / 100.0).clamp(0.0, 1.0);
     try {
       await _player.setVolume(_volume01);
       await _tapPlayer.setVolume(_volume01);
+      await _musicPlayer.setVolume(_volume01);
     } catch (_) {}
+
+    if (!_soundEnabled) {
+      try {
+        await _musicPlayer.pause();
+      } catch (_) {}
+    } else if (allowStartBgm && !_gameActive) {
+      await startBackgroundMusic();
+    }
   }
 
   static Future<void> _applyVolume() async {
     try {
       await _player.setVolume(_volume01);
       await _tapPlayer.setVolume(_volume01);
+    } catch (_) {}
+  }
+
+  /// Looping menu / meta BGM (`assets/music/fon.mp3`). No-op during an active run.
+  static Future<void> startBackgroundMusic() async {
+    if (!_soundEnabled || _gameActive) {
+      return;
+    }
+    try {
+      final PlayerState st = _musicPlayer.state;
+      if (st == PlayerState.playing) {
+        await _musicPlayer.setVolume(_volume01);
+        return;
+      }
+      if (st == PlayerState.paused) {
+        await _musicPlayer.setVolume(_volume01);
+        await _musicPlayer.resume();
+        return;
+      }
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+      await _musicPlayer.setVolume(_volume01);
+      await _musicPlayer.play(AssetSource('music/fon.mp3'));
+    } catch (_) {}
+  }
+
+  /// Call when entering [GameScreen] — pauses BGM so SFX stay readable.
+  static Future<void> onEnterGame() async {
+    _gameActive = true;
+    try {
+      await _musicPlayer.pause();
+    } catch (_) {}
+  }
+
+  /// Call when leaving [GameScreen] — resumes BGM if sound is on.
+  static Future<void> onLeaveGame() async {
+    _gameActive = false;
+    if (!_soundEnabled) {
+      return;
+    }
+    try {
+      await _musicPlayer.setVolume(_volume01);
+      final PlayerState st = _musicPlayer.state;
+      if (st == PlayerState.paused) {
+        await _musicPlayer.resume();
+        return;
+      }
+      await startBackgroundMusic();
     } catch (_) {}
   }
 
@@ -100,6 +160,7 @@ class Sfx {
     }
   }
 
+  /// Stops one-shot SFX players (not background music).
   static Future<void> stop() async {
     try {
       await _player.stop();

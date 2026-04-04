@@ -1,6 +1,9 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../services/sfx.dart';
 import '../app_version.dart';
 import '../ui/neon_background.dart';
 import '../ui/neon_button.dart';
@@ -9,10 +12,21 @@ import 'game_screen.dart';
 import 'profile_screen.dart';
 import 'versus_screen.dart';
 
-class MainMenuScreen extends StatelessWidget {
+class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
 
   static const String route = '/menu';
+
+  @override
+  State<MainMenuScreen> createState() => _MainMenuScreenState();
+}
+
+class _MainMenuScreenState extends State<MainMenuScreen> {
+  @override
+  void initState() {
+    super.initState();
+    unawaited(Sfx.startBackgroundMusic());
+  }
 
   @override
   Widget build(BuildContext context) {
