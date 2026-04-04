@@ -13,7 +13,7 @@
     "challenges": {
       ".indexOn": "createdAtMs",
       "$id": {
-        ".read": "auth != null && (data.child('fromUid').val() == auth.uid || data.child('toUid').val() == auth.uid || newData.child('fromUid').val() == auth.uid || newData.child('toUid').val() == auth.uid)",
+        ".read": "auth != null && (data.child('fromUid').val() == auth.uid || data.child('toUid').val() == auth.uid)",
         ".write": "auth != null && (data.child('fromUid').val() == auth.uid || data.child('toUid').val() == auth.uid || (!data.exists() && newData.child('fromUid').val() == auth.uid))",
         ".validate": "newData.hasChildren(['createdAtMs','endsAtMs','fromUid','toUid','status']) && newData.child('createdAtMs').isNumber() && newData.child('endsAtMs').isNumber() && newData.child('fromUid').isString() && newData.child('toUid').isString() && newData.child('status').isString()"
       }
