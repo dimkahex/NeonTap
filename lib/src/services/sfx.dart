@@ -29,12 +29,13 @@ class Sfx {
     ),
   );
 
-  /// Short taps + one-shot hits: do not take exclusive focus from BGM.
+  /// Short taps + one-shot hits. [AndroidAudioFocus.none] avoids requesting focus
+  /// that ducks the BGM stream — [gainTransientMayDuck] made fon.mp3 pump/warble on every SFX.
   static final AudioContext _ctxSfx = AudioContext(
     android: AudioContextAndroid(
       contentType: AndroidContentType.sonification,
       usageType: AndroidUsageType.game,
-      audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+      audioFocus: AndroidAudioFocus.none,
     ),
     iOS: AudioContextIOS(
       category: AVAudioSessionCategory.playback,
