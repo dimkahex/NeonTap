@@ -4,6 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 
 import '../config/online_config.dart';
 import '../models/challenge.dart';
+import 'friends_service.dart';
 import 'player_prefs.dart';
 
 class ChallengeService {
@@ -52,7 +53,8 @@ class ChallengeService {
     }
     final String fromUid = _myUid!;
     final String fromName = await PlayerPrefs.getDisplayName();
-    final String toName = 'Friend';
+    final String toNameResolved = await FriendsService.displayNameForUid(toUid);
+    final String toName = toNameResolved == toUid ? 'Игрок' : toNameResolved;
     final int createdAt = _nowMs();
     final int endsAt = createdAt + duration.duration.inMilliseconds;
 
@@ -108,6 +110,11 @@ class ChallengeService {
   static Future<void> accept(String challengeId) async {
     await _ensureAuth();
     if (!_ready) return;
+    final String me = _myUid!;
+    final DataSnapshot snap = await FirebaseDatabase.instance.ref('challenges/$challengeId').get();
+    if (!snap.exists || snap.value is! Map) return;
+    final Challenge c = Challenge.fromMap(challengeId, Map<Object?, Object?>.from(snap.value! as Map));
+    if (c.status != ChallengeStatus.pending || me != c.toUid) return;
     await FirebaseDatabase.instance.ref('challenges/$challengeId').update(<String, Object?>{
       'status': ChallengeStatus.active.name,
     });
@@ -116,6 +123,11 @@ class ChallengeService {
   static Future<void> decline(String challengeId) async {
     await _ensureAuth();
     if (!_ready) return;
+    final String me = _myUid!;
+    final DataSnapshot snap = await FirebaseDatabase.instance.ref('challenges/$challengeId').get();
+    if (!snap.exists || snap.value is! Map) return;
+    final Challenge c = Challenge.fromMap(challengeId, Map<Object?, Object?>.from(snap.value! as Map));
+    if (c.status != ChallengeStatus.pending || me != c.toUid) return;
     await FirebaseDatabase.instance.ref('challenges/$challengeId').update(<String, Object?>{
       'status': ChallengeStatus.declined.name,
     });
@@ -124,6 +136,11 @@ class ChallengeService {
   static Future<void> cancel(String challengeId) async {
     await _ensureAuth();
     if (!_ready) return;
+    final String me = _myUid!;
+    final DataSnapshot snap = await FirebaseDatabase.instance.ref('challenges/$challengeId').get();
+    if (!snap.exists || snap.value is! Map) return;
+    final Challenge c = Challenge.fromMap(challengeId, Map<Object?, Object?>.from(snap.value! as Map));
+    if (c.status != ChallengeStatus.pending || me != c.fromUid) return;
     await FirebaseDatabase.instance.ref('challenges/$challengeId').update(<String, Object?>{
       'status': ChallengeStatus.cancelled.name,
     });

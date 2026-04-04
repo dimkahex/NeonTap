@@ -1,5 +1,6 @@
 import 'dart:async' show unawaited;
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../config/online_config.dart';
@@ -86,16 +87,21 @@ class _ChallengeCard extends StatelessWidget {
     final bool over = c.isOver || c.status == ChallengeStatus.completed;
     final String vs = '${c.fromName} vs ${c.toName}';
     final String status = switch (c.status) {
-      ChallengeStatus.pending => 'PENDING',
-      ChallengeStatus.active => over ? 'FINISHING' : 'ACTIVE',
-      ChallengeStatus.completed => 'COMPLETED',
-      ChallengeStatus.declined => 'DECLINED',
-      ChallengeStatus.cancelled => 'CANCELLED',
+      ChallengeStatus.pending => 'ОЖИДАЕТ',
+      ChallengeStatus.active => over ? 'ФИНИШ' : 'ИДЁТ',
+      ChallengeStatus.completed => 'ЗАВЕРШЁН',
+      ChallengeStatus.declined => 'ОТКЛОНЁН',
+      ChallengeStatus.cancelled => 'ОТМЕНЁН',
     };
     final DateTime end = DateTime.fromMillisecondsSinceEpoch(c.endsAtMs);
-    final String endLine = 'Ends: ${end.toLocal().toString().split(".").first}';
+    final String endLine = 'До: ${end.toLocal().toString().split(".").first}';
 
-    final bool iAmFrom = false; // resolved later when Firebase enabled; keep neutral in UI.
+    final String? uid = FirebaseAuth.instance.currentUser?.uid;
+    final bool iAmFrom = uid != null && uid == c.fromUid;
+    final bool iAmTo = uid != null && uid == c.toUid;
+    final bool canArmMyRisk = c.status == ChallengeStatus.active &&
+        !over &&
+        ((iAmFrom && !c.fromRiskUsed) || (iAmTo && !c.toRiskUsed));
 
     return Card(
       color: Colors.black.withOpacity(0.25),
@@ -141,35 +147,35 @@ class _ChallengeCard extends StatelessWidget {
               runSpacing: 8,
               alignment: WrapAlignment.end,
               children: <Widget>[
-                if (c.status == ChallengeStatus.pending)
+                if (c.status == ChallengeStatus.pending && iAmTo) ...<Widget>[
                   ElevatedButton(
                     onPressed: () => unawaited(ChallengeService.accept(c.id)),
-                    child: const Text('ACCEPT'),
+                    child: const Text('ПРИНЯТЬ'),
                   ),
-                if (c.status == ChallengeStatus.pending)
                   OutlinedButton(
                     onPressed: () => unawaited(ChallengeService.decline(c.id)),
-                    child: const Text('DECLINE'),
+                    child: const Text('ОТКЛОНИТЬ'),
                   ),
-                if (c.status == ChallengeStatus.active && !over)
-                  OutlinedButton(
-                    onPressed: () => unawaited(ChallengeService.armRisk(c.id, armed: true)),
-                    child: const Text('ARM RISK x1.25'),
-                  ),
-                if (c.status == ChallengeStatus.active && !over)
-                  OutlinedButton(
-                    onPressed: () => unawaited(ChallengeService.armRisk(c.id, armed: false)),
-                    child: const Text('DISARM'),
-                  ),
+                ],
                 if (c.status == ChallengeStatus.pending && iAmFrom)
                   OutlinedButton(
                     onPressed: () => unawaited(ChallengeService.cancel(c.id)),
-                    child: const Text('CANCEL'),
+                    child: const Text('ОТМЕНИТЬ'),
                   ),
+                if (canArmMyRisk) ...<Widget>[
+                  OutlinedButton(
+                    onPressed: () => unawaited(ChallengeService.armRisk(c.id, armed: true)),
+                    child: const Text('РИСК ×1.25'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => unawaited(ChallengeService.armRisk(c.id, armed: false)),
+                    child: const Text('СБРОС РИСКА'),
+                  ),
+                ],
               ],
             ),
             Text(
-              'Risk: once per player, next run can be ×1.25 (score 0 => 0, consumes risk).',
+              'Риск: один раз на игрока — следующий забег может дать ×1.25 (0 остаётся 0, риск сгорает).',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white38),
             ),
           ],
@@ -221,7 +227,7 @@ class _ScoreMini extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'x$combo  ${riskUsed ? 'RISK USED' : 'RISK READY'}',
+            'x$combo  ${riskUsed ? 'РИСК ИСП.' : 'ГОТОВ'}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
           ),
         ],
@@ -308,7 +314,10 @@ class _CreateChallengeSheetState extends State<_CreateChallengeSheet> {
               value: _dur,
               decoration: const InputDecoration(border: OutlineInputBorder()),
               items: ChallengeDuration.values
-                  .map((ChallengeDuration d) => DropdownMenuItem<ChallengeDuration>(value: d, child: Text(d.label)))
+                  .map(
+                    (ChallengeDuration d) =>
+                        DropdownMenuItem<ChallengeDuration>(value: d, child: Text(d.labelRu)),
+                  )
                   .toList(),
               onChanged: (ChallengeDuration? v) {
                 if (v == null) return;
