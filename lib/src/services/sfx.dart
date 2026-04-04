@@ -17,7 +17,7 @@ class Sfx {
   static bool _bgmPrepared = false;
 
   /// BGM keeps long-form focus; SFX use transient ducking so music is not stopped (Android audio focus).
-  static const AudioContext _ctxBgm = AudioContext(
+  static final AudioContext _ctxBgm = AudioContext(
     android: AudioContextAndroid(
       contentType: AndroidContentType.music,
       usageType: AndroidUsageType.media,
@@ -30,7 +30,7 @@ class Sfx {
   );
 
   /// Short taps + one-shot hits: do not take exclusive focus from BGM.
-  static const AudioContext _ctxSfx = AudioContext(
+  static final AudioContext _ctxSfx = AudioContext(
     android: AudioContextAndroid(
       contentType: AndroidContentType.sonification,
       usageType: AndroidUsageType.game,
