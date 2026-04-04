@@ -43,6 +43,8 @@ Phase 1 закрыт: **ядро геймплея**, офлайн-статист
 
 Когда подключишь облако: поставь **`true`**, затем чеклист **[firebase/README.md](firebase/README.md)** (правила RTDB, Anonymous Auth, `google-services.json`).
 
+Локальная сборка APK: установи **Android SDK** (через Android Studio) и задай **`ANDROID_HOME`** (или открой проект в Android Studio) — иначе `flutter build apk` сообщит, что SDK не найден.
+
 ## Containerized Android build (CI-friendly)
 This repo includes a Docker image setup for building an Android APK in a reproducible environment.
 
