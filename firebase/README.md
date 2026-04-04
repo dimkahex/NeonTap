@@ -35,12 +35,20 @@
 
 ## 4. Android-приложение в Firebase
 
+Если в `google-services.json` указан **`package_name`: `com.neonpulse`**, то в `android/app/build.gradle` должны совпадать **`applicationId`** и **`namespace`** (после `flutter create --platforms=android .` поправь вручную). Иначе сборка или Firebase не сойдутся.
+
+Скопируй скачанный файл в проект:
+
+`android/app/google-services.json`
+
+В репозитории этот файл **в .gitignore** — не коммить в публичный репозиторий (или добавь второе приложение в Firebase под тот `applicationId`, который генерирует Flutter, и скачай другой json).
+
+В консоли Firebase:
+
 1. Настройки проекта (шестерёнка) → **Project settings**  
 2. Внизу **Your apps** → иконка **Android**  
-3. **Android package name** должен **совпадать** с тем, что в твоём `android/app/build.gradle` (`applicationId`).  
-   Для шаблона из CI обычно: **`com.neonpulse.neon_pulse_online`**  
-4. Зарегистрируй приложение → **Download `google-services.json`**  
-5. Положи файл в проект: **`android/app/google-services.json`** (не коммить в публичный репо, если боишься утечек — для open source часто коммитят, ключи не секрет для клиента).
+3. **Android package name** = тот же, что **`applicationId`** в `android/app/build.gradle` (у тебя в json сейчас **`com.neonpulse`**).  
+4. Зарегистрируй приложение → **Download `google-services.json`** → положи в **`android/app/google-services.json`**
 
 Если папки `android/` ещё нет локально:
 

@@ -14,3 +14,6 @@ android/.gradle/
 android/local.properties
 ios/Pods/
 
+# Real Firebase config (keep local; CI uses ci/android-placeholders/)
+android/app/google-services.json
+
