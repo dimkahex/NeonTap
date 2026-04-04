@@ -407,4 +407,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get durationWeek1 => '1 week';
+
+  @override
+  String get settingsTitle => 'SETTINGS';
+
+  @override
+  String get settingsAudioSection => 'AUDIO';
+
+  @override
+  String get settingsSoundEnabled => 'Sound effects';
+
+  @override
+  String get settingsVolume => 'Volume';
+
+  @override
+  String get settingsLanguage => 'Interface language';
+
+  @override
+  String get settingsLanguagePickerTitle => 'Choose language';
+
+  @override
+  String get profileOpenSettings => 'Settings';
 }

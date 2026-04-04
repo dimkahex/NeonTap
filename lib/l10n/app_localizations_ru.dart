@@ -407,4 +407,25 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get durationWeek1 => '1 неделя';
+
+  @override
+  String get settingsTitle => 'НАСТРОЙКИ';
+
+  @override
+  String get settingsAudioSection => 'ЗВУК';
+
+  @override
+  String get settingsSoundEnabled => 'Звуковые эффекты';
+
+  @override
+  String get settingsVolume => 'Громкость';
+
+  @override
+  String get settingsLanguage => 'Язык интерфейса';
+
+  @override
+  String get settingsLanguagePickerTitle => 'Выберите язык';
+
+  @override
+  String get profileOpenSettings => 'Настройки';
 }

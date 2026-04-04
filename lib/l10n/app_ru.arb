@@ -121,5 +121,12 @@
   "defaultPlayerName": "Игрок",
   "durationDay1": "1 день",
   "durationDay2": "2 дня",
-  "durationWeek1": "1 неделя"
+  "durationWeek1": "1 неделя",
+  "settingsTitle": "НАСТРОЙКИ",
+  "settingsAudioSection": "ЗВУК",
+  "settingsSoundEnabled": "Звуковые эффекты",
+  "settingsVolume": "Громкость",
+  "settingsLanguage": "Язык интерфейса",
+  "settingsLanguagePickerTitle": "Выберите язык",
+  "profileOpenSettings": "Настройки"
 }

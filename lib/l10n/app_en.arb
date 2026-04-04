@@ -169,5 +169,12 @@
   "defaultPlayerName": "Player",
   "durationDay1": "1 day",
   "durationDay2": "2 days",
-  "durationWeek1": "1 week"
+  "durationWeek1": "1 week",
+  "settingsTitle": "SETTINGS",
+  "settingsAudioSection": "AUDIO",
+  "settingsSoundEnabled": "Sound effects",
+  "settingsVolume": "Volume",
+  "settingsLanguage": "Interface language",
+  "settingsLanguagePickerTitle": "Choose language",
+  "profileOpenSettings": "Settings"
 }

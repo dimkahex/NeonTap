@@ -13,6 +13,7 @@ import 'screens/challenges_screen.dart';
 import 'screens/game_screen.dart';
 import 'screens/main_menu_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/settings_screen.dart';
 import 'screens/results_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/versus_screen.dart';
@@ -67,6 +68,7 @@ class _NeonPulseAppState extends State<NeonPulseApp> {
             GameScreen.route: (_) => const GameScreen(),
             ResultsScreen.route: (_) => const ResultsScreen(),
             ProfileScreen.route: (_) => const ProfileScreen(),
+            SettingsScreen.route: (_) => const SettingsScreen(),
           },
         );
       },

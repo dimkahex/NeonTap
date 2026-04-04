@@ -7,11 +7,10 @@ import '../../l10n/app_localizations.dart';
 import '../config/online_config.dart';
 import '../services/friends_service.dart';
 import '../services/leaderboard_service.dart';
-import '../locale/app_locale_scope.dart';
-import '../locale/locale_controller.dart';
 import '../l10n_ext/friend_add_error_l10n.dart';
 import '../services/player_prefs.dart';
 import '../ui/neon_background.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -101,40 +100,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final LocaleController locale = AppLocaleScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.profileTitle)),
+      appBar: AppBar(
+        title: Text(l10n.profileTitle),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: l10n.profileOpenSettings,
+            onPressed: () => Navigator.of(context).pushNamed(SettingsScreen.route),
+          ),
+        ],
+      ),
       body: NeonBackground(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : ListView(
                 padding: const EdgeInsets.all(18),
                 children: <Widget>[
-                  Text(
-                    l10n.profileLanguage,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          letterSpacing: 1.2,
-                          color: Colors.white70,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  SegmentedButton<String>(
-                    segments: <ButtonSegment<String>>[
-                      ButtonSegment<String>(
-                        value: 'ru',
-                        label: Text(l10n.profileLanguageRu),
-                      ),
-                      ButtonSegment<String>(
-                        value: 'en',
-                        label: Text(l10n.profileLanguageEn),
-                      ),
-                    ],
-                    selected: <String>{locale.locale.languageCode},
-                    onSelectionChanged: (Set<String> next) {
-                      unawaited(locale.setLanguageCode(next.first));
-                    },
-                  ),
-                  const SizedBox(height: 24),
                   Text(
                     l10n.profileNameInTable,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(

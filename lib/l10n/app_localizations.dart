@@ -830,6 +830,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'1 week'**
   String get durationWeek1;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SETTINGS'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsAudioSection.
+  ///
+  /// In en, this message translates to:
+  /// **'AUDIO'**
+  String get settingsAudioSection;
+
+  /// No description provided for @settingsSoundEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound effects'**
+  String get settingsSoundEnabled;
+
+  /// No description provided for @settingsVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get settingsVolume;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface language'**
+  String get settingsLanguage;
+
+  /// No description provided for @settingsLanguagePickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose language'**
+  String get settingsLanguagePickerTitle;
+
+  /// No description provided for @profileOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get profileOpenSettings;
 }
 
 class _AppLocalizationsDelegate
