@@ -16,12 +16,44 @@ class Sfx {
   /// `true` after [AssetSource] for BGM was prepared (buffered once).
   static bool _bgmPrepared = false;
 
-  /// Call once after [WidgetsFlutterBinding.ensureInitialized] — separates SFX (low latency) from music (buffered).
+  /// BGM keeps long-form focus; SFX use transient ducking so music is not stopped (Android audio focus).
+  static const AudioContext _ctxBgm = AudioContext(
+    android: AudioContextAndroid(
+      contentType: AndroidContentType.music,
+      usageType: AndroidUsageType.media,
+      audioFocus: AndroidAudioFocus.gain,
+    ),
+    iOS: AudioContextIOS(
+      category: AVAudioSessionCategory.playback,
+      options: <AVAudioSessionOptions>{AVAudioSessionOptions.mixWithOthers},
+    ),
+  );
+
+  /// Short taps + one-shot hits: do not take exclusive focus from BGM.
+  static const AudioContext _ctxSfx = AudioContext(
+    android: AudioContextAndroid(
+      contentType: AndroidContentType.sonification,
+      usageType: AndroidUsageType.game,
+      audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+    ),
+    iOS: AudioContextIOS(
+      category: AVAudioSessionCategory.playback,
+      options: <AVAudioSessionOptions>{AVAudioSessionOptions.mixWithOthers},
+    ),
+  );
+
+  /// Call once after [WidgetsFlutterBinding.ensureInitialized].
+  /// Hit/perfect SFX use [PlayerMode.mediaPlayer] — low-latency pool can drop longer samples like `perfect_hit.wav`.
   static Future<void> initAudio() async {
     try {
-      await _player.setPlayerMode(PlayerMode.lowLatency);
-      await _tapPlayer.setPlayerMode(PlayerMode.lowLatency);
       await _musicPlayer.setPlayerMode(PlayerMode.mediaPlayer);
+      await _musicPlayer.setAudioContext(_ctxBgm);
+
+      await _player.setPlayerMode(PlayerMode.mediaPlayer);
+      await _player.setAudioContext(_ctxSfx);
+
+      await _tapPlayer.setPlayerMode(PlayerMode.lowLatency);
+      await _tapPlayer.setAudioContext(_ctxSfx);
     } catch (_) {}
   }
 
