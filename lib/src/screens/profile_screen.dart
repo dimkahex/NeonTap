@@ -24,7 +24,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _name = TextEditingController();
   final TextEditingController _addFriend = TextEditingController();
-  String? _friendCode;
+  String _friendCode = '';
   bool _loading = true;
   List<_FriendRow> _friends = <_FriendRow>[];
 
@@ -44,7 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _load() async {
     final String n = await PlayerPrefs.getDisplayName();
     _name.text = n;
-    final String? code = await FriendsService.ensureFriendCode();
+    final String code = await FriendsService.ensureFriendCode();
     final List<String> uids = await FriendsService.listFriendUids();
     final List<_FriendRow> rows = <_FriendRow>[];
     for (final String uid in uids) {
@@ -55,7 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
     setState(() {
-      _friendCode = code;
+      _friendCode = code.trim();
       _friends = rows;
       _loading = false;
     });
@@ -146,45 +146,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                   const SizedBox(height: 28),
+                  Text(
+                    l10n.profileYourFriendCode,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          letterSpacing: 1.2,
+                          color: Colors.white70,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: SelectableText(
+                          _friendCode.isEmpty ? '—' : _friendCode,
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 4,
+                              ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.copy, color: Color(0xFF35E6FF)),
+                        tooltip: l10n.profileCopyCode,
+                        onPressed: _friendCode.isEmpty
+                            ? null
+                            : () {
+                                Clipboard.setData(ClipboardData(text: _friendCode));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(l10n.profileCodeCopied)),
+                                );
+                              },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.profileFriendCodeHint,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+                  ),
                   if (kFirebaseOnlineFeaturesEnabled) ...<Widget>[
-                    Text(
-                      l10n.profileYourFriendCode,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            letterSpacing: 1.2,
-                            color: Colors.white70,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: SelectableText(
-                            _friendCode ?? '—',
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 4,
-                                ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.copy, color: Color(0xFF35E6FF)),
-                          tooltip: l10n.profileCopyCode,
-                          onPressed: _friendCode == null
-                              ? null
-                              : () {
-                                  Clipboard.setData(ClipboardData(text: _friendCode!));
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(l10n.profileCodeCopied)),
-                                  );
-                                },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.profileFriendCodeHint,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
-                    ),
                     const SizedBox(height: 28),
                     Text(
                       l10n.profileAddFriend,
@@ -240,11 +240,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
-                  ] else
+                  ] else ...<Widget>[
+                    const SizedBox(height: 16),
                     Text(
                       l10n.profileFirebaseLaterNote,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white54),
                     ),
+                  ],
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).maybePop(),

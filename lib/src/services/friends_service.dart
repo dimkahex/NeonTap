@@ -7,6 +7,7 @@ import 'package:firebase_database/firebase_database.dart';
 import '../config/online_config.dart';
 import '../models/leaderboard_entry.dart';
 import 'leaderboard_service.dart';
+import 'share_code_local.dart';
 
 /// Friend codes + `users/{uid}/friends/{friendUid}`.
 class FriendsService {
@@ -42,37 +43,69 @@ class FriendsService {
   static String? get _myUid => FirebaseAuth.instance.currentUser?.uid;
 
   /// Creates and stores a unique 6-char code if missing.
-  static Future<String?> ensureFriendCode() async {
+  /// Always returns a code: [ShareCodeLocal] when Firebase is off, not ready, or on error.
+  static Future<String> ensureFriendCode() async {
+    final String local = await ShareCodeLocal.getOrCreate();
+
     if (!kFirebaseOnlineFeaturesEnabled) {
-      return null;
-    }
-    await _ensureAuth();
-    if (!_ready) {
-      return null;
-    }
-    final String uid = _myUid!;
-    final DatabaseReference mine = FirebaseDatabase.instance.ref('users/$uid/friendCode');
-    final DataSnapshot existing = await mine.get();
-    if (existing.exists && existing.value is String) {
-      return existing.value! as String;
+      return local;
     }
 
-    final Random rnd = Random.secure();
-    for (int attempt = 0; attempt < 40; attempt++) {
-      final String code = List<String>.generate(
-        6,
-        (_) => _chars[rnd.nextInt(_chars.length)],
-      ).join();
-      final DatabaseReference codeRef = FirebaseDatabase.instance.ref('friendCodes/$code');
-      final DataSnapshot taken = await codeRef.get();
-      if (taken.exists) {
-        continue;
+    try {
+      await _ensureAuth();
+      if (!_ready) {
+        return local;
       }
-      await codeRef.set(<String, String>{'uid': uid});
-      await mine.set(code);
-      return code;
+      final String uid = _myUid!;
+      final DatabaseReference mine = FirebaseDatabase.instance.ref('users/$uid/friendCode');
+      final DataSnapshot existing = await mine.get();
+      if (existing.exists && existing.value is String) {
+        final String s = (existing.value! as String).trim().toUpperCase();
+        if (s.length == 6) {
+          await ShareCodeLocal.save(s);
+          return s;
+        }
+      }
+
+      // Prefer registering the same code as on device (stable across reinstall if prefs kept).
+      final DatabaseReference localRef = FirebaseDatabase.instance.ref('friendCodes/$local');
+      final DataSnapshot taken = await localRef.get();
+      if (!taken.exists) {
+        await localRef.set(<String, String>{'uid': uid});
+        await mine.set(local);
+        await ShareCodeLocal.save(local);
+        return local;
+      }
+      if (taken.value is Map) {
+        final Map<Object?, Object?> m = taken.value! as Map<Object?, Object?>;
+        final String? owner = m['uid'] as String?;
+        if (owner == uid) {
+          await mine.set(local);
+          await ShareCodeLocal.save(local);
+          return local;
+        }
+      }
+
+      final Random rnd = Random.secure();
+      for (int attempt = 0; attempt < 40; attempt++) {
+        final String code = List<String>.generate(
+          6,
+          (_) => _chars[rnd.nextInt(_chars.length)],
+        ).join();
+        final DatabaseReference codeRef = FirebaseDatabase.instance.ref('friendCodes/$code');
+        final DataSnapshot snap = await codeRef.get();
+        if (snap.exists) {
+          continue;
+        }
+        await codeRef.set(<String, String>{'uid': uid});
+        await mine.set(code);
+        await ShareCodeLocal.save(code);
+        return code;
+      }
+      return local;
+    } catch (_) {
+      return local;
     }
-    return null;
   }
 
   /// Returns `null` on success.
