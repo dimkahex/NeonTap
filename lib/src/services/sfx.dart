@@ -12,8 +12,18 @@ class Sfx {
 
   static bool _soundEnabled = true;
   static double _volume01 = 1.0;
-  /// True while [GameScreen] is on top — background music is paused.
-  static bool _gameActive = false;
+
+  /// `true` after [AssetSource] for BGM was prepared (buffered once).
+  static bool _bgmPrepared = false;
+
+  /// Call once after [WidgetsFlutterBinding.ensureInitialized] — separates SFX (low latency) from music (buffered).
+  static Future<void> initAudio() async {
+    try {
+      await _player.setPlayerMode(PlayerMode.lowLatency);
+      await _tapPlayer.setPlayerMode(PlayerMode.lowLatency);
+      await _musicPlayer.setPlayerMode(PlayerMode.mediaPlayer);
+    } catch (_) {}
+  }
 
   /// Call from [main] and after changing sound settings.
   /// [allowStartBgm] — `false` at cold start so music does not play during splash; main menu calls [startBackgroundMusic].
@@ -31,62 +41,32 @@ class Sfx {
       try {
         await _musicPlayer.pause();
       } catch (_) {}
-    } else if (allowStartBgm && !_gameActive) {
+    } else if (allowStartBgm) {
       await startBackgroundMusic();
     }
   }
 
-  static Future<void> _applyVolume() async {
-    try {
-      await _player.setVolume(_volume01);
-      await _tapPlayer.setVolume(_volume01);
-    } catch (_) {}
-  }
-
-  /// Looping menu / meta BGM (`assets/music/fon.mp3`). No-op during an active run.
+  /// Looping BGM: first [play] loads/buffers the track once; later only [resume] after pause (settings / mute).
   static Future<void> startBackgroundMusic() async {
-    if (!_soundEnabled || _gameActive) {
+    if (!_soundEnabled) {
       return;
     }
     try {
+      if (!_bgmPrepared) {
+        await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+        await _musicPlayer.setVolume(_volume01);
+        await _musicPlayer.play(AssetSource('music/fon.mp3'));
+        _bgmPrepared = true;
+        return;
+      }
+
       final PlayerState st = _musicPlayer.state;
       if (st == PlayerState.playing) {
         await _musicPlayer.setVolume(_volume01);
         return;
       }
-      if (st == PlayerState.paused) {
-        await _musicPlayer.setVolume(_volume01);
-        await _musicPlayer.resume();
-        return;
-      }
-      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
       await _musicPlayer.setVolume(_volume01);
-      await _musicPlayer.play(AssetSource('music/fon.mp3'));
-    } catch (_) {}
-  }
-
-  /// Call when entering [GameScreen] — pauses BGM so SFX stay readable.
-  static Future<void> onEnterGame() async {
-    _gameActive = true;
-    try {
-      await _musicPlayer.pause();
-    } catch (_) {}
-  }
-
-  /// Call when leaving [GameScreen] — resumes BGM if sound is on.
-  static Future<void> onLeaveGame() async {
-    _gameActive = false;
-    if (!_soundEnabled) {
-      return;
-    }
-    try {
-      await _musicPlayer.setVolume(_volume01);
-      final PlayerState st = _musicPlayer.state;
-      if (st == PlayerState.paused) {
-        await _musicPlayer.resume();
-        return;
-      }
-      await startBackgroundMusic();
+      await _musicPlayer.resume();
     } catch (_) {}
   }
 
@@ -96,7 +76,6 @@ class Sfx {
       return;
     }
     try {
-      await _applyVolume();
       await _tapPlayer.play(AssetSource('sfx/tap_soft.wav'));
     } catch (_) {
       // ignore (optional asset)
@@ -109,7 +88,6 @@ class Sfx {
       return;
     }
     final String asset = switch (j) {
-      // User request: best hit uses "perfect" SFX.
       HitJudgement.ultra => 'sfx/perfect_hit.wav',
       HitJudgement.perfect => 'sfx/perfect_hit.wav',
       HitJudgement.good => 'sfx/good_tick.wav',
@@ -120,7 +98,6 @@ class Sfx {
       HitJudgement.miss => 'sfx/miss_error.wav',
     };
     try {
-      await _applyVolume();
       await _player.play(AssetSource(asset));
     } catch (_) {
       // ignore
@@ -136,11 +113,9 @@ class Sfx {
       return;
     }
     try {
-      await _applyVolume();
       await _player.play(AssetSource('sfx/defeat.wav'));
     } catch (_) {
       try {
-        await _applyVolume();
         await _player.play(AssetSource('sfx/miss_error.wav'));
       } catch (_) {
         // ignore
@@ -153,7 +128,6 @@ class Sfx {
       return;
     }
     try {
-      await _applyVolume();
       await _player.play(AssetSource('sfx/whoosh_loop.wav'));
     } catch (_) {
       // ignore
