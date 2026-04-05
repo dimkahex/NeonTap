@@ -51,7 +51,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gameAimHint =>
-      'AIM: hit the shrinking ring. In the band = PERFECT / GOOD / OK by timing. Outside the band but still near the ring = OK. PERFECT chains: x1 → x2 → x4 → x8 → x16; GOOD or OK resets the chain.';
+      'AIM: shrinking ring — zones from center: center hole = MISS, red PERFECT (+8, chain ×2→×4→×8→×16), yellow COOL (+6), orange GOOD (+4), green OK (+2); outside green = MISS. Grazing off-band = OK. Only consecutive PERFECTs raise the chain.';
 
   @override
   String get gameWarmupHint => 'Warm-up — ring aim starts soon';
@@ -75,6 +75,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get judgementGood => 'GOOD';
+
+  @override
+  String get judgementCool => 'COOL';
 
   @override
   String get judgementMiss => 'MISS';
@@ -103,8 +106,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resultsHitBreakdown => 'HIT BREAKDOWN';
 
   @override
-  String resultsBreakdown(int perfect, int good, int ok) {
-    return 'PERFECT $perfect · GOOD $good · OK $ok';
+  String resultsBreakdown(int perfect, int cool, int good, int ok) {
+    return 'PERFECT $perfect · COOL $cool · GOOD $good · OK $ok';
   }
 
   @override

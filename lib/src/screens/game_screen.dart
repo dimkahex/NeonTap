@@ -66,6 +66,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   int _maxChainMultiplier = 1;
 
   int _hitsPerfect = 0;
+  int _hitsCool = 0;
   int _hitsGood = 0;
   int _hitsOk = 0;
 
@@ -121,8 +122,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return _maxRadius * (1 - t);
   }
 
-  /// Next PERFECT tap uses this multiplier (x1…x16).
-  int get _nextPerfectMultiplier => 1 << _perfectChain.clamp(0, 4);
+  /// Next PERFECT tap uses ×2, ×4, ×8, or ×16 after consecutive PERFECTs.
+  int get _nextPerfectMultiplier => 2 << _perfectChain.clamp(0, 3);
 
   void _restartCycle({required int scoreAfterTap}) {
     final Difficulty d = difficultyForScore(scoreAfterTap);
@@ -132,10 +133,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   HitJudgement _judge(double r) {
-    if (r < TimingThresholds.rPerfect) return HitJudgement.perfect;
-    if (r < TimingThresholds.rGood) return HitJudgement.good;
-    if (r < TimingThresholds.rOkOuter) return HitJudgement.ok;
-    return HitJudgement.miss;
+    if (r >= TimingThresholds.rOkOuter) return HitJudgement.miss;
+    if (r < TimingThresholds.rCenterMiss) return HitJudgement.miss;
+    if (r < TimingThresholds.rPerfectOuter) return HitJudgement.perfect;
+    if (r < TimingThresholds.rCoolOuter) return HitJudgement.cool;
+    if (r < TimingThresholds.rGoodOuter) return HitJudgement.good;
+    return HitJudgement.ok;
   }
 
   Future<void> _handleTap(Offset tapPos, Size screenSize) async {
@@ -152,7 +155,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         await _handleJudgement(HitJudgement.miss);
         return;
       }
-      if (r > 52 && tapDist < _voidEyePx) {
+      if (r > TimingThresholds.rCoolOuter && tapDist < _voidEyePx) {
         await _handleJudgement(HitJudgement.miss);
         return;
       }
@@ -192,6 +195,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final int seed = DateTime.now().microsecondsSinceEpoch & 0x7fffffff;
     final double intensity = switch (j) {
       HitJudgement.perfect => 1.45,
+      HitJudgement.cool => 1.12,
       HitJudgement.good => 1.08,
       HitJudgement.ok => 0.95,
       HitJudgement.miss => 0.95,
@@ -208,7 +212,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     switch (j) {
       case HitJudgement.perfect:
         _hitsPerfect++;
-        final int mult = 1 << _perfectChain.clamp(0, 4);
+        final int mult = 2 << _perfectChain.clamp(0, 3);
         _maxChainMultiplier = math.max(_maxChainMultiplier, mult);
         final int add = (j.basePoints * mult * _bonusScoreMul).round();
         _perfectChain++;
@@ -217,6 +221,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _showBigText(j.locLabel(l10n), scale: 1.14, glow: true);
         _slowMoFor(const Duration(seconds: 5));
         await Future<void>.delayed(const Duration(milliseconds: 120));
+        if (!mounted) return;
+        setState(() => _score += add);
+        _maybeRollBonus();
+        _restartCycle(scoreAfterTap: _score);
+        return;
+      case HitJudgement.cool:
+        _hitsCool++;
+        _perfectChain = 0;
+        final int add = (j.basePoints * _bonusScoreMul).round();
+        emitFloatingPoints(_floatingPoints, value: add, j: j, seed: seed);
+        _hitPulse.forward(from: 0);
+        _showBigText(j.locLabel(l10n), scale: 1.08, glow: false);
+        await Future<void>.delayed(const Duration(milliseconds: 110));
         if (!mounted) return;
         setState(() => _score += add);
         _maybeRollBonus();
@@ -331,6 +348,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
     final JudgementBreakdown breakdown = JudgementBreakdown(
       perfect: _hitsPerfect,
+      cool: _hitsCool,
       good: _hitsGood,
       ok: _hitsOk,
     );

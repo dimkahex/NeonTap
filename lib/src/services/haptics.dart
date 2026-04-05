@@ -7,6 +7,8 @@ class Haptics {
     switch (j) {
       case HitJudgement.perfect:
         return HapticFeedback.heavyImpact();
+      case HitJudgement.cool:
+        return HapticFeedback.mediumImpact();
       case HitJudgement.good:
         return HapticFeedback.lightImpact();
       case HitJudgement.ok:

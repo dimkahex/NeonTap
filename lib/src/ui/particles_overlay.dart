@@ -62,7 +62,8 @@ class _ParticlesOverlayState extends State<ParticlesOverlay> with SingleTickerPr
 
   Color _colorFor(HitJudgement j) => switch (j) {
         HitJudgement.perfect => const Color(0xFFFFE082),
-        HitJudgement.good => const Color(0xFF2CFF7B),
+        HitJudgement.cool => const Color(0xFFFFEE58),
+        HitJudgement.good => const Color(0xFFFFAB40),
         HitJudgement.ok => Colors.white70,
         HitJudgement.miss => Colors.redAccent,
       };

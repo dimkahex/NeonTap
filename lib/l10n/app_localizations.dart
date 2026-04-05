@@ -179,7 +179,7 @@ abstract class AppLocalizations {
   /// No description provided for @gameAimHint.
   ///
   /// In en, this message translates to:
-  /// **'AIM: hit the shrinking ring. In the band = PERFECT / GOOD / OK by timing. Outside the band but still near the ring = OK. PERFECT chains: x1 → x2 → x4 → x8 → x16; GOOD or OK resets the chain.'**
+  /// **'AIM: shrinking ring — zones from center: center hole = MISS, red PERFECT (+8, chain ×2→×4→×8→×16), yellow COOL (+6), orange GOOD (+4), green OK (+2); outside green = MISS. Grazing off-band = OK. Only consecutive PERFECTs raise the chain.'**
   String get gameAimHint;
 
   /// No description provided for @gameWarmupHint.
@@ -223,6 +223,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'GOOD'**
   String get judgementGood;
+
+  /// No description provided for @judgementCool.
+  ///
+  /// In en, this message translates to:
+  /// **'COOL'**
+  String get judgementCool;
 
   /// No description provided for @judgementMiss.
   ///
@@ -275,8 +281,8 @@ abstract class AppLocalizations {
   /// No description provided for @resultsBreakdown.
   ///
   /// In en, this message translates to:
-  /// **'PERFECT {perfect} · GOOD {good} · OK {ok}'**
-  String resultsBreakdown(int perfect, int good, int ok);
+  /// **'PERFECT {perfect} · COOL {cool} · GOOD {good} · OK {ok}'**
+  String resultsBreakdown(int perfect, int cool, int good, int ok);
 
   /// No description provided for @resultsBestCombo.
   ///

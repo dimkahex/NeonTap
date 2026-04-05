@@ -104,7 +104,7 @@ class ResultsScreen extends StatelessWidget {
 }
 
 String _breakdownLine(AppLocalizations l10n, JudgementBreakdown b) {
-  return l10n.resultsBreakdown(b.perfect, b.good, b.ok);
+  return l10n.resultsBreakdown(b.perfect, b.cool, b.good, b.ok);
 }
 
 class _StatTile extends StatelessWidget {

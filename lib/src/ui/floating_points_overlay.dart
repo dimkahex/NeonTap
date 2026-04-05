@@ -113,15 +113,20 @@ class _FloatingPointsOverlayState extends State<FloatingPointsOverlay> with Sing
           color: const Color(0xFFFFE082),
           shadows: const <Shadow>[Shadow(color: Color(0xAAFFE082), blurRadius: 22)],
         ),
+      HitJudgement.cool => base.copyWith(
+          fontSize: 28,
+          color: const Color(0xFFFFF59D),
+          shadows: const <Shadow>[Shadow(color: Color(0xAAFFEE58), blurRadius: 18)],
+        ),
       HitJudgement.good => base.copyWith(
           fontSize: 26,
-          color: const Color(0xFF2CFF7B),
-          shadows: const <Shadow>[Shadow(color: Color(0x992CFF7B), blurRadius: 14)],
+          color: const Color(0xFFFFB74D),
+          shadows: const <Shadow>[Shadow(color: Color(0x99FF8A25), blurRadius: 14)],
         ),
       HitJudgement.ok => base.copyWith(
           fontSize: 22,
-          color: Colors.white70,
-          shadows: const <Shadow>[Shadow(color: Color(0x8835E6FF), blurRadius: 10)],
+          color: const Color(0xFF69F0AE),
+          shadows: const <Shadow>[Shadow(color: Color(0x882EE85A), blurRadius: 10)],
         ),
       HitJudgement.miss => base.copyWith(
           fontSize: 24,

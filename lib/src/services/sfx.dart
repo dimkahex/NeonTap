@@ -122,6 +122,7 @@ class Sfx {
     }
     final String asset = switch (j) {
       HitJudgement.perfect => 'sfx/perfect_hit.wav',
+      HitJudgement.cool => 'sfx/good_tick.wav',
       HitJudgement.good => 'sfx/good_tick.wav',
       HitJudgement.ok => 'sfx/ok_click.wav',
       HitJudgement.miss => 'sfx/miss_error.wav',

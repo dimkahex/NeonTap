@@ -51,7 +51,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gameAimHint =>
-      'Цель — сужающееся кольцо. В полосе: PERFECT / GOOD / OK по таймингу. Вне полосы, но рядом с кольцом — OK. Цепочка PERFECT: x1→x2→x4→x8→x16; GOOD или OK сбрасывают цепочку.';
+      'Цель — сужающееся кольцо. От центра: дыра = MISS, красный PERFECT (+8, цепочка ×2→×4→×8→×16), жёлтый COOL (+6), оранжевый GOOD (+4), зелёный OK (+2); за зелёным — MISS. Скользящее касание вне полосы — OK. Цепочку поднимают только подряд PERFECT.';
 
   @override
   String get gameWarmupHint => 'Разминка — скоро появится прицел кольца';
@@ -75,6 +75,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get judgementGood => 'GOOD';
+
+  @override
+  String get judgementCool => 'COOL';
 
   @override
   String get judgementMiss => 'MISS';
@@ -103,8 +106,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get resultsHitBreakdown => 'РАСКЛАД ПОПАДАНИЙ';
 
   @override
-  String resultsBreakdown(int perfect, int good, int ok) {
-    return 'PERFECT $perfect · GOOD $good · OK $ok';
+  String resultsBreakdown(int perfect, int cool, int good, int ok) {
+    return 'PERFECT $perfect · COOL $cool · GOOD $good · OK $ok';
   }
 
   @override

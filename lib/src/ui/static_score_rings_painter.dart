@@ -1,87 +1,122 @@
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../game/timing_thresholds.dart';
 
-/// Fixed reference circles — same radii as [TimingThresholds]. Innermost = PERFECT threshold.
+/// Мишень из полупрозрачных неоновых колец — те же радиуды, что и [TimingThresholds].
+/// Снаружи внутрь: внешний MISS → OK (зелёный) → GOOD → COOL → PERFECT → центральная дыра MISS.
 class StaticScoreRingsPainter extends CustomPainter {
   StaticScoreRingsPainter({required this.centerOffset});
 
   final Offset centerOffset;
 
-  static void _neonRing(
+  static Path _annulus(Offset c, double outerR, double innerR) {
+    final Path outer = Path()..addOval(Rect.fromCircle(center: c, radius: outerR));
+    final Path inner = Path()..addOval(Rect.fromCircle(center: c, radius: innerR));
+    return Path.combine(ui.PathOperation.difference, outer, inner);
+  }
+
+  static void _fillAnnulus(
     Canvas canvas,
     Offset c,
-    double radius, {
-    required Color core,
-    required Color glow,
-    double lineWidth = 2.6,
-  }) {
+    double outerR,
+    double innerR,
+    Color fill,
+  ) {
+    if (outerR <= innerR + 0.5) return;
+    final Path p = _annulus(c, outerR, innerR);
+    canvas.drawPath(
+      p,
+      Paint()
+        ..style = PaintingStyle.fill
+        ..color = fill,
+    );
+  }
+
+  static void _neonEdge(Canvas canvas, Offset c, double radius, Color core, Color glow) {
     if (radius < 2) return;
-    final Paint outerGlow = Paint()
+    final Paint soft = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = lineWidth + 10
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10)
-      ..color = glow.withValues(alpha: 0.22);
-    final Paint midGlow = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = lineWidth + 4
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4)
-      ..color = glow.withValues(alpha: 0.45);
-    final Paint shadow = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = lineWidth + 2.4
-      ..color = const Color(0xFF050508).withValues(alpha: 0.75);
+      ..strokeWidth = 3
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
+      ..color = glow.withValues(alpha: 0.35);
     final Paint line = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = lineWidth
-      ..color = core;
-
-    canvas.drawCircle(c, radius, outerGlow);
-    canvas.drawCircle(c, radius, midGlow);
-    canvas.drawCircle(c, radius, shadow);
+      ..strokeWidth = 1.4
+      ..color = core.withValues(alpha: 0.55);
+    canvas.drawCircle(c, radius, soft);
     canvas.drawCircle(c, radius, line);
   }
 
   @override
   void paint(Canvas canvas, Size size) {
     final Offset c = Offset(size.width / 2, size.height / 2) + centerOffset;
+    final double maxR = math.min(size.width, size.height) * 0.48;
 
-    _neonRing(
+    // Внешняя чёрная зона (MISS) — тёмный полупрозрачный слой.
+    _fillAnnulus(
+      canvas,
+      c,
+      maxR,
+      TimingThresholds.rOkOuter,
+      const Color(0xFF050508).withValues(alpha: 0.42),
+    );
+
+    // OK — зелёный неон.
+    _fillAnnulus(
       canvas,
       c,
       TimingThresholds.rOkOuter,
-      core: const Color(0xFFE0F7FF),
-      glow: const Color(0xFFB388FF),
-      lineWidth: 2.35,
+      TimingThresholds.rGoodOuter,
+      const Color(0xFF2EE85A).withValues(alpha: 0.14),
     );
-    _neonRing(
+    _neonEdge(canvas, c, TimingThresholds.rOkOuter, const Color(0xFF66FF88), const Color(0xFF2EE85A));
+    _neonEdge(canvas, c, TimingThresholds.rGoodOuter, const Color(0xFFFFB74D), const Color(0xFFFF8A25));
+
+    // GOOD — оранжевый.
+    _fillAnnulus(
       canvas,
       c,
-      TimingThresholds.rGood,
-      core: const Color(0xFFFFA726),
-      glow: const Color(0xFFFF6D00),
-      lineWidth: 2.5,
-    );
-    _neonRing(
-      canvas,
-      c,
-      TimingThresholds.rPerfect,
-      core: const Color(0xFFFFF59D),
-      glow: const Color(0xFFFFEA00),
-      lineWidth: 3.0,
+      TimingThresholds.rGoodOuter,
+      TimingThresholds.rCoolOuter,
+      const Color(0xFFFF8A25).withValues(alpha: 0.16),
     );
 
-    // Crisp PERFECT boundary — when the play ring shrinks *inside* this circle, timing is PERFECT.
-    final Paint crisp = Paint()
+    // COOL — жёлтый.
+    _fillAnnulus(
+      canvas,
+      c,
+      TimingThresholds.rCoolOuter,
+      TimingThresholds.rPerfectOuter,
+      const Color(0xFFFFEA4D).withValues(alpha: 0.15),
+    );
+    _neonEdge(canvas, c, TimingThresholds.rCoolOuter, const Color(0xFFFFEE58), const Color(0xFFFFEA00));
+
+    // PERFECT — красно-розовый неон.
+    _fillAnnulus(
+      canvas,
+      c,
+      TimingThresholds.rPerfectOuter,
+      TimingThresholds.rCenterMiss,
+      const Color(0xFFFF3355).withValues(alpha: 0.17),
+    );
+    _neonEdge(canvas, c, TimingThresholds.rPerfectOuter, const Color(0xFFFF8A80), const Color(0xFFFF3355));
+
+    // Центральная «дыра» — MISS.
+    canvas.drawCircle(
+      c,
+      TimingThresholds.rCenterMiss,
+      Paint()
+        ..style = PaintingStyle.fill
+        ..color = const Color(0xFF020208).withValues(alpha: 0.92),
+    );
+    final Paint rim = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
-      ..color = Colors.white.withValues(alpha: 0.95);
-    canvas.drawCircle(c, TimingThresholds.rPerfect, crisp);
-    final Paint inner = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
-      ..color = const Color(0xFFFFEA00).withValues(alpha: 0.9);
-    canvas.drawCircle(c, TimingThresholds.rPerfect, inner);
+      ..strokeWidth = 1.6
+      ..color = const Color(0xFF1A1A22).withValues(alpha: 0.9);
+    canvas.drawCircle(c, TimingThresholds.rCenterMiss, rim);
   }
 
   @override

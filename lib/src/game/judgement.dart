@@ -1,5 +1,6 @@
 enum HitJudgement {
   perfect,
+  cool,
   good,
   ok,
   miss,
@@ -7,8 +8,9 @@ enum HitJudgement {
 
 extension HitJudgementUi on HitJudgement {
   int get basePoints => switch (this) {
-        HitJudgement.perfect => 10,
-        HitJudgement.good => 5,
+        HitJudgement.perfect => 8,
+        HitJudgement.cool => 6,
+        HitJudgement.good => 4,
         HitJudgement.ok => 2,
         HitJudgement.miss => 0,
       };

@@ -13,7 +13,7 @@
   "menuFooterRankings": "Рейтинг: сейчас локально • облако — в финале",
   "splashGlobalCompetition": "ГЛОБАЛЬНОЕ СОРЕВНОВАНИЕ",
   "gameEndRunTooltip": "Закончить забег",
-  "gameAimHint": "Цель — сужающееся кольцо. В полосе: PERFECT / GOOD / OK по таймингу. Вне полосы, но рядом с кольцом — OK. Цепочка PERFECT: x1→x2→x4→x8→x16; GOOD или OK сбрасывают цепочку.",
+  "gameAimHint": "Цель — сужающееся кольцо. От центра: дыра = MISS, красный PERFECT (+8, цепочка ×2→×4→×8→×16), жёлтый COOL (+6), оранжевый GOOD (+4), зелёный OK (+2); за зелёным — MISS. Скользящее касание вне полосы — OK. Цепочку поднимают только подряд PERFECT.",
   "gameWarmupHint": "Разминка — скоро появится прицел кольца",
   "gameScoreX2": "СЧЁТ ×2",
   "gameStage": "Этап {stage} · {seconds} с",
@@ -21,6 +21,7 @@
   "judgementOk": "OK",
   "judgementPerfect": "PERFECT",
   "judgementGood": "GOOD",
+  "judgementCool": "COOL",
   "judgementMiss": "MISS",
   "resultsDefeat": "ПОРАЖЕНИЕ",
   "resultsRunOver": "ЗАБЕГ ОКОНЧЕН",
@@ -29,10 +30,11 @@
   "resultsAccuracy": "ТОЧНОСТЬ",
   "resultsHits": "{count} попаданий",
   "resultsHitBreakdown": "РАСКЛАД ПОПАДАНИЙ",
-  "resultsBreakdown": "PERFECT {perfect} · GOOD {good} · OK {ok}",
+  "resultsBreakdown": "PERFECT {perfect} · COOL {cool} · GOOD {good} · OK {ok}",
   "@resultsBreakdown": {
     "placeholders": {
       "perfect": {"type": "int"},
+      "cool": {"type": "int"},
       "good": {"type": "int"},
       "ok": {"type": "int"}
     }

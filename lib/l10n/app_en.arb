@@ -13,7 +13,7 @@
   "menuFooterRankings": "Rankings: local now • cloud in the final build",
   "splashGlobalCompetition": "GLOBAL COMPETITION",
   "gameEndRunTooltip": "End run",
-  "gameAimHint": "AIM: hit the shrinking ring. In the band = PERFECT / GOOD / OK by timing. Outside the band but still near the ring = OK. PERFECT chains: x1 → x2 → x4 → x8 → x16; GOOD or OK resets the chain.",
+  "gameAimHint": "AIM: shrinking ring — zones from center: center hole = MISS, red PERFECT (+8, chain ×2→×4→×8→×16), yellow COOL (+6), orange GOOD (+4), green OK (+2); outside green = MISS. Grazing off-band = OK. Only consecutive PERFECTs raise the chain.",
   "gameWarmupHint": "Warm-up — ring aim starts soon",
   "gameScoreX2": "SCORE x2",
   "gameStage": "Stage {stage} · {seconds}s",
@@ -27,6 +27,7 @@
   "judgementOk": "OK",
   "judgementPerfect": "PERFECT",
   "judgementGood": "GOOD",
+  "judgementCool": "COOL",
   "judgementMiss": "MISS",
   "resultsDefeat": "DEFEAT",
   "resultsRunOver": "RUN OVER",
@@ -40,10 +41,11 @@
     }
   },
   "resultsHitBreakdown": "HIT BREAKDOWN",
-  "resultsBreakdown": "PERFECT {perfect} · GOOD {good} · OK {ok}",
+  "resultsBreakdown": "PERFECT {perfect} · COOL {cool} · GOOD {good} · OK {ok}",
   "@resultsBreakdown": {
     "placeholders": {
       "perfect": {"type": "int"},
+      "cool": {"type": "int"},
       "good": {"type": "int"},
       "ok": {"type": "int"}
     }
