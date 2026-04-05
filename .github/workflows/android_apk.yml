@@ -69,10 +69,10 @@ jobs:
           VERSION="$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr -d '\r')"
           VER_NAME="${VERSION%%+*}"
           BUILD_NUM="${VERSION#*+}"
-          OUT="build/versioned-apk"
-          mkdir -p "$OUT"
           SRC="build/app/outputs/flutter-apk/app-release.apk"
-          # Unique per workflow run (even if pubspec was not bumped between pushes).
+          # Same layout as local: build/app/outputs/apk/release/NeonPulse-vX.Y.Z-bN[-rR].apk
+          OUT="build/app/outputs/apk/release"
+          mkdir -p "$OUT"
           dst="NeonPulse-v${VER_NAME}-b${BUILD_NUM}-r${GITHUB_RUN_NUMBER}.apk"
           cp "$SRC" "${OUT}/${dst}"
           ls -lah "${OUT}/${dst}"
@@ -91,5 +91,5 @@ jobs:
         with:
           name: neon_pulse_online-apk-${{ github.run_number }}
           path: |
-            build/versioned-apk/*.apk
+            build/app/outputs/apk/release/*.apk
 

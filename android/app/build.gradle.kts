@@ -1,3 +1,6 @@
+import com.android.build.api.dsl.ApplicationExtension
+import java.io.File
+
 plugins {
     id("com.android.application")
     id("com.google.gms.google-services")
@@ -42,4 +45,26 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// After `flutter build apk`, copy universal APK to `build/app/outputs/apk/release/` with version in filename.
+afterEvaluate {
+    val androidExt = extensions.findByType(ApplicationExtension::class.java) ?: return@afterEvaluate
+    tasks.named("assembleRelease").configure {
+        doLast {
+            val rootDir = rootProject.layout.projectDirectory.asFile.parentFile ?: return@doLast
+            val src = File(rootDir, "build/app/outputs/flutter-apk/app-release.apk")
+            if (!src.exists()) {
+                logger.warn("Versioned APK copy skipped (output not found yet): ${src.invariantSeparatorsPath}")
+                return@doLast
+            }
+            val destDir = File(rootDir, "build/app/outputs/apk/release")
+            destDir.mkdirs()
+            val ver = androidExt.defaultConfig.versionName ?: "0.0.0"
+            val code = androidExt.defaultConfig.versionCode ?: 1
+            val dst = File(destDir, "NeonPulse-v${ver}-b${code}.apk")
+            src.copyTo(dst, overwrite = true)
+            logger.lifecycle("Copied release APK to: ${dst.invariantSeparatorsPath}")
+        }
+    }
 }
