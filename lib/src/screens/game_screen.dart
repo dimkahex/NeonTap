@@ -7,6 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../app_version.dart';
 import '../game/difficulty.dart';
 import '../game/judgement.dart';
+import '../game/timing_thresholds.dart';
 import '../game/run_result.dart';
 import '../game/run_stats.dart';
 import '../services/haptics.dart';
@@ -43,10 +44,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   static const double _bandRimOuterPx = 72;
   /// Outer edge of scoring band (|tap radius − ring|) beyond main strip — still OK if timing valid.
   static const double _bandEdgeOuterPx = 92;
-  /// Timing tiers by shrinking radius (px). OK zone widened vs old 110.
-  static const double _rPerfect = 30;
-  static const double _rGood = 52;
-  static const double _rOkOuter = 140;
   /// Decorative spiral "eye" — if the ring is far out, tapping the eye is a miss.
   static const double _voidEyePx = 16;
   /// Ring aim + spiral visible early (was 150 — too long to notice in a short run).
@@ -135,9 +132,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   HitJudgement _judge(double r) {
-    if (r < _rPerfect) return HitJudgement.perfect;
-    if (r < _rGood) return HitJudgement.good;
-    if (r < _rOkOuter) return HitJudgement.ok;
+    if (r < TimingThresholds.rPerfect) return HitJudgement.perfect;
+    if (r < TimingThresholds.rGood) return HitJudgement.good;
+    if (r < TimingThresholds.rOkOuter) return HitJudgement.ok;
     return HitJudgement.miss;
   }
 
@@ -418,11 +415,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               Positioned.fill(
                 child: IgnorePointer(
                   child: AnimatedBuilder(
-                    animation: Listenable.merge(<Listenable>[_shrink, _pulse, _hitPulse, _centerOffset]),
+                    animation: Listenable.merge(<Listenable>[_shrink, _centerOffset]),
                     builder: (BuildContext context, _) {
                       final double r = _currentRadius;
-                      final double hitScale = 1.0 + (0.035 * (1.0 - Curves.easeOut.transform(_hitPulse.value)));
-                      final double rr = r * hitScale;
                       return Stack(
                         children: <Widget>[
                           CustomPaint(
@@ -433,9 +428,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           ),
                           CustomPaint(
                             painter: MainRingHudPainter(
-                              radius: rr,
+                              radius: r,
                               maxRadius: _maxRadius,
-                              pulse: distract ? _pulse.value : 0,
                               centerOffset: _centerOffset.value,
                             ),
                             child: const SizedBox.expand(),
@@ -444,7 +438,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             CustomPaint(
                               painter: RingGuidePainter(
                                 centerOffset: _centerOffset.value,
-                                ringRadius: rr,
+                                ringRadius: r,
                                 halfWidth: _ringHalfWidthPx,
                                 bandGrazeOuter: _bandGrazeOuterPx,
                                 bandRimOuter: _bandRimOuterPx,

@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// Fixed-radius timing circles — must match `_rPerfect` / `_rGood` / `_rOkOuter` in `game_screen.dart`.
+import '../game/timing_thresholds.dart';
+
+/// Fixed reference circles — same radii as [TimingThresholds]. Innermost = PERFECT threshold.
 class StaticScoreRingsPainter extends CustomPainter {
   StaticScoreRingsPainter({required this.centerOffset});
 
   final Offset centerOffset;
-
-  static const double _rPerfect = 30;
-  static const double _rGood = 52;
-  static const double _rOk = 140;
 
   static void _neonRing(
     Canvas canvas,
@@ -51,7 +49,7 @@ class StaticScoreRingsPainter extends CustomPainter {
     _neonRing(
       canvas,
       c,
-      _rOk,
+      TimingThresholds.rOkOuter,
       core: const Color(0xFFE0F7FF),
       glow: const Color(0xFFB388FF),
       lineWidth: 2.35,
@@ -59,7 +57,7 @@ class StaticScoreRingsPainter extends CustomPainter {
     _neonRing(
       canvas,
       c,
-      _rGood,
+      TimingThresholds.rGood,
       core: const Color(0xFFFFA726),
       glow: const Color(0xFFFF6D00),
       lineWidth: 2.5,
@@ -67,11 +65,23 @@ class StaticScoreRingsPainter extends CustomPainter {
     _neonRing(
       canvas,
       c,
-      _rPerfect,
+      TimingThresholds.rPerfect,
       core: const Color(0xFFFFF59D),
       glow: const Color(0xFFFFEA00),
-      lineWidth: 2.8,
+      lineWidth: 3.0,
     );
+
+    // Crisp PERFECT boundary — when the play ring shrinks *inside* this circle, timing is PERFECT.
+    final Paint crisp = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..color = Colors.white.withValues(alpha: 0.95);
+    canvas.drawCircle(c, TimingThresholds.rPerfect, crisp);
+    final Paint inner = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..color = const Color(0xFFFFEA00).withValues(alpha: 0.9);
+    canvas.drawCircle(c, TimingThresholds.rPerfect, inner);
   }
 
   @override

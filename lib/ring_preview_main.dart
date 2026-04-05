@@ -98,7 +98,6 @@ class _RingPreviewPageState extends State<RingPreviewPage> {
                       painter: MainRingHudPainter(
                         radius: _demoRadius,
                         maxRadius: _maxRadius,
-                        pulse: _pulse,
                         centerOffset: _centerOffset.value,
                       ),
                       child: const SizedBox.expand(),
