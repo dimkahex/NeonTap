@@ -169,21 +169,27 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       final bool ringAim = _score >= _ringAimMinScore;
       if (ringAim) {
         final double delta = (tapDist - r).abs();
-        if (delta > _bandEdgeOuterPx) {
-          await _handleJudgement(HitJudgement.miss);
-          return;
-        }
+        // «Глаз» спирали — отдельное правило (ранний тап в центр при большом r).
         if (r > TimingThresholds.rCoolOuter && tapDist < _voidEyePx) {
           await _handleJudgement(HitJudgement.miss);
           return;
         }
-        if (delta <= _ringHalfWidthPx) {
-          await _handleJudgement(_judge(r));
-          return;
-        }
+        // Тайминг — единственный источник MISS по зонам (как до 35 очков).
+        // Раньше delta > band давало мгновенный MISS даже при PERFECT по r — из‑за этого
+        // «красная зона» считалась промахом, если палец чуть в стороне от линии кольца.
         final HitJudgement timing = _judge(r);
         if (timing == HitJudgement.miss) {
           await _handleJudgement(HitJudgement.miss);
+          return;
+        }
+        // В пределах основной полосы кольца — полный суд (PERFECT / COOL / …).
+        if (delta <= _ringHalfWidthPx) {
+          await _handleJudgement(timing);
+          return;
+        }
+        // Скольжение по внешним линиям гайда — только ослабление до OK.
+        if (delta <= _bandEdgeOuterPx) {
+          await _handleJudgement(HitJudgement.ok);
           return;
         }
         await _handleJudgement(HitJudgement.ok);
@@ -431,7 +437,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   animation: Listenable.merge(<Listenable>[_shrink, _pulse, _missFlash, _hitPulse, _centerOffset]),
                   builder: (BuildContext context, _) {
                     final double r = _currentRadius;
-                    final double hitScale = 1.0 + (0.035 * (1.0 - Curves.easeOut.transform(_hitPulse.value)));
+                    // Пик «удара» по середине анимации; в покое и в конце — 1.0 (совпадает с r для прицела).
+                    final double hitScale = 1.0 + 0.035 * math.sin(_hitPulse.value * math.pi);
                     final double rr = r * hitScale;
                     return CustomPaint(
                       painter: NeonCirclePainter(
