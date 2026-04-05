@@ -85,6 +85,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   /// (the shrink tween would otherwise finish during `await Sfx.playTap()` / judgement delays).
   bool _tapJudgementInProgress = false;
 
+  /// Set when a shrink cycle starts — ignore impossible instant `completed` callbacks (controller quirks).
+  DateTime _shrinkCycleStartedAt = DateTime.now();
+
   @override
   void initState() {
     super.initState();
@@ -92,6 +95,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _shrink = AnimationController(vsync: this, duration: Duration(milliseconds: firstMs))
       ..addStatusListener(_onShrinkStatus)
       ..forward();
+    _shrinkCycleStartedAt = DateTime.now();
     _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..repeat();
     _missFlash = AnimationController(vsync: this, duration: const Duration(milliseconds: 180));
     _hitPulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 140));
@@ -118,6 +122,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void _onShrinkStatus(AnimationStatus status) {
     if (status != AnimationStatus.completed) return;
     if (_tapJudgementInProgress) return;
+    // Drop spurious "completed" right after _restartCycle (same controller, next frame).
+    if (DateTime.now().difference(_shrinkCycleStartedAt) < const Duration(milliseconds: 120)) {
+      return;
+    }
     // If user didn't tap in time, treat as miss.
     unawaited(_handleJudgement(HitJudgement.miss));
   }
@@ -134,6 +142,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final Difficulty d = difficultyForScore(scoreAfterTap);
     final int ms = (d.shrinkSeconds * 1000).round();
     _shrink.duration = Duration(milliseconds: ms);
+    _shrinkCycleStartedAt = DateTime.now();
     _shrink.forward(from: 0);
   }
 
@@ -302,20 +311,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _centerOffset.value = Offset(math.sin(t * 0.9) * amp, math.cos(t * 1.1) * (amp * 0.7));
   }
 
+  /// Visual / combo gate only — does **not** drive [_shrink] after a tap.
+  /// Resuming the tween with `forward(from: v)` after [_shrink.stop] could let the
+  /// controller hit [AnimationStatus.completed] right after judgement finishes, which
+  /// produced PERFECT + MISS once [_tapJudgementInProgress] cleared.
   void _slowMoFor(Duration d) {
     if (_slowMo) return;
     _slowMo = true;
     _slowMoTimer?.cancel();
-
-    // Slow down current cycle by stretching remaining time.
-    final double v = _shrink.value;
-    final Duration? base = _shrink.duration;
-    if (base != null) {
-      final int remainingMs = ((1 - v) * base.inMilliseconds).round();
-      _shrink.duration = Duration(milliseconds: (remainingMs * 1.65).round().clamp(200, 9000));
-      _shrink.forward(from: v);
-    }
-
     _slowMoTimer = Timer(d, () {
       _slowMo = false;
     });
