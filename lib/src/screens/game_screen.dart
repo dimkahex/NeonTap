@@ -18,6 +18,7 @@ import '../l10n_ext/hit_judgement_l10n.dart';
 import '../ui/neon_background.dart';
 import '../ui/neon_circle_painter.dart';
 import '../ui/main_ring_hud_painter.dart';
+import '../ui/static_score_rings_painter.dart';
 import '../ui/floating_points_overlay.dart';
 import '../ui/particles_overlay.dart';
 import '../ui/ring_guide_painter.dart';
@@ -434,7 +435,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         pulse: distract ? _pulse.value : 0,
                         missFlash: _missFlash.value,
                         centerOffset: _centerOffset.value,
-                        ringAimMode: ringAim,
                         hideMainRingStroke: true,
                       ),
                       child: const SizedBox.expand(),
@@ -454,6 +454,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       final double rr = r * hitScale;
                       return Stack(
                         children: <Widget>[
+                          CustomPaint(
+                            painter: StaticScoreRingsPainter(
+                              centerOffset: _centerOffset.value,
+                            ),
+                            child: const SizedBox.expand(),
+                          ),
                           CustomPaint(
                             painter: MainRingHudPainter(
                               radius: rr,

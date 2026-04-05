@@ -2,8 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// High-contrast stroke for the shrinking **main** ring — drawn above particles/overlays
-/// so timing stays readable while distract pulse and VFX still run underneath.
+/// Thin stroke for the shrinking **main** ring — above particles; keeps distract motion, not a thick “target”.
 class MainRingHudPainter extends CustomPainter {
   MainRingHudPainter({
     required this.radius,
@@ -14,7 +13,6 @@ class MainRingHudPainter extends CustomPainter {
 
   final double radius;
   final double maxRadius;
-  /// Same distract channel as [NeonCirclePainter] (0 when pulse distract is off).
   final double pulse;
   final Offset centerOffset;
 
@@ -32,30 +30,22 @@ class MainRingHudPainter extends CustomPainter {
     final double distract = 1.0 + (0.06 * math.sin(pulse * math.pi * 2));
     final double rd = r * distract;
 
-    // Dark backing — reads on bright spiral bands and particle bursts.
     final Paint silhouette = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 11
-      ..color = const Color(0xFF010203).withValues(alpha: 0.72);
+      ..strokeWidth = 3.2
+      ..color = const Color(0xFF010203).withValues(alpha: 0.55);
     canvas.drawCircle(c, rd, silhouette);
-
-    final Paint midGlow = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 7
-      ..color = core.withValues(alpha: 0.55)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
-    canvas.drawCircle(c, rd, midGlow);
 
     final Paint ring = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 5.2
-      ..color = core.withValues(alpha: 1.0);
+      ..strokeWidth = 2.4
+      ..color = core.withValues(alpha: 0.98);
     canvas.drawCircle(c, rd, ring);
 
     final Paint rim = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..color = Colors.white.withValues(alpha: 0.92);
+      ..strokeWidth = 1.0
+      ..color = Colors.white.withValues(alpha: 0.88);
     canvas.drawCircle(c, rd, rim);
   }
 
