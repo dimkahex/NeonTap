@@ -371,14 +371,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     Navigator.of(context).pushReplacementNamed(ResultsScreen.route, arguments: result);
   }
 
-  /// Spiral visible from the first frame; intensity ramps with score (capped so it does not drown the playfield).
+  /// Спираль: плавный рост яркости с счётом + чуть тусклее с прицелом кольца, чтобы не забивать HUD.
   double _spiralIntensityForScore(int s) {
-    if (s < 40) return 0.16;
-    if (s < 120) return 0.28;
-    if (s < 250) return 0.40;
-    if (s < 400) return 0.52;
-    return 0.64;
+    final double t = math.pow((s / 1050.0).clamp(0.0, 1.0), 0.82).toDouble();
+    return 0.24 + 0.50 * t;
   }
+
+  /// 0..1 — насколько включены усложняющие слои спирали (эхо-кольца, плотнее штрих).
+  double _spiralProgressionForScore(int s) => (s / 1680.0).clamp(0.0, 1.0);
 
   @override
   Widget build(BuildContext context) {
@@ -387,7 +387,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final bool distract = d.pulseDistract;
     final bool ringAim = _score >= _ringAimMinScore;
     final double spiralIntensity =
-        _spiralIntensityForScore(_score) * (ringAim ? 0.64 : 1.0);
+        _spiralIntensityForScore(_score) * (ringAim ? 0.82 : 1.0);
+    final double spiralProgression = _spiralProgressionForScore(_score);
 
     return PopScope(
       canPop: false,
@@ -409,6 +410,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   enabled: true,
                   intensity: spiralIntensity,
                   score: _score,
+                  stage: d.stage,
+                  progression: spiralProgression,
                 ),
               ),
               Positioned.fill(
