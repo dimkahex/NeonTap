@@ -45,16 +45,16 @@ class RingGuidePainter extends CustomPainter {
     }
 
     // Outermost shells first (EDGE → RIM → GRAZE): clearer hue separation.
-    strokePair(outer: bandEdgeOuter, alphaMul: 0.38, color: const Color(0xFFB0BEC5), strokeW: 2.6);
-    strokePair(outer: bandRimOuter, alphaMul: 0.42, color: const Color(0xFFFFB74D), strokeW: 2.6);
-    strokePair(outer: bandGrazeOuter, alphaMul: 0.46, color: const Color(0xFF69F0AE), strokeW: 2.8);
+    strokePair(outer: bandEdgeOuter, alphaMul: 0.58, color: const Color(0xFFB0BEC5), strokeW: 3.4);
+    strokePair(outer: bandRimOuter, alphaMul: 0.62, color: const Color(0xFFFFB74D), strokeW: 3.4);
+    strokePair(outer: bandGrazeOuter, alphaMul: 0.66, color: const Color(0xFF69F0AE), strokeW: 3.6);
 
     // Wide shell fill (readability between the two circles of each shell).
     if (bandGrazeOuter > halfWidth + 0.5) {
       final Paint shellFill = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = (bandGrazeOuter - halfWidth) * 2
-        ..color = const Color(0xFF546E7A).withValues(alpha: 0.22 * opacity);
+        ..color = const Color(0xFF546E7A).withValues(alpha: 0.34 * opacity);
       canvas.drawCircle(c, r, shellFill);
     }
 
@@ -62,21 +62,21 @@ class RingGuidePainter extends CustomPainter {
     final double bandW = halfWidth * 2;
     final Paint glow = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = bandW + 14
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10)
-      ..color = const Color(0xFF00E5FF).withValues(alpha: 0.28 * opacity);
+      ..strokeWidth = bandW + 16
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12)
+      ..color = const Color(0xFF00E5FF).withValues(alpha: 0.42 * opacity);
     canvas.drawCircle(c, r, glow);
 
     final Paint band = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = bandW
-      ..color = const Color(0xFF00E5FF).withValues(alpha: 0.40 * opacity);
+      ..color = const Color(0xFF00E5FF).withValues(alpha: 0.58 * opacity);
     canvas.drawCircle(c, r, band);
 
     final Paint rimInner = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.8
-      ..color = Colors.white.withValues(alpha: 0.88 * opacity);
+      ..strokeWidth = 3.2
+      ..color = Colors.white.withValues(alpha: 0.94 * opacity);
     final double ri = (r - halfWidth).clamp(0.0, double.infinity);
     final double ro = r + halfWidth;
     if (ri > 2) {
@@ -86,8 +86,8 @@ class RingGuidePainter extends CustomPainter {
 
     final Paint mid = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..color = const Color(0xFFFFEA00).withValues(alpha: 0.75 * opacity);
+      ..strokeWidth = 2.0
+      ..color = const Color(0xFFFFEA00).withValues(alpha: 0.88 * opacity);
     canvas.drawCircle(c, r, mid);
   }
 

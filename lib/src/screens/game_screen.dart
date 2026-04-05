@@ -17,6 +17,7 @@ import '../services/challenge_service.dart';
 import '../l10n_ext/hit_judgement_l10n.dart';
 import '../ui/neon_background.dart';
 import '../ui/neon_circle_painter.dart';
+import '../ui/main_ring_hud_painter.dart';
 import '../ui/floating_points_overlay.dart';
 import '../ui/particles_overlay.dart';
 import '../ui/ring_guide_painter.dart';
@@ -426,39 +427,61 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     final double r = _currentRadius;
                     final double hitScale = 1.0 + (0.035 * (1.0 - Curves.easeOut.transform(_hitPulse.value)));
                     final double rr = r * hitScale;
-                    return Stack(
-                      children: <Widget>[
-                        CustomPaint(
-                          painter: NeonCirclePainter(
-                            radius: rr,
-                            maxRadius: _maxRadius,
-                            pulse: distract ? _pulse.value : 0,
-                            missFlash: _missFlash.value,
-                            centerOffset: _centerOffset.value,
-                            ringAimMode: ringAim,
-                          ),
-                          child: const SizedBox.expand(),
-                        ),
-                        if (ringAim)
-                          CustomPaint(
-                            painter: RingGuidePainter(
-                              centerOffset: _centerOffset.value,
-                              ringRadius: rr,
-                              halfWidth: _ringHalfWidthPx,
-                              bandGrazeOuter: _bandGrazeOuterPx,
-                              bandRimOuter: _bandRimOuterPx,
-                              bandEdgeOuter: _bandEdgeOuterPx,
-                              opacity: 1.0,
-                            ),
-                            child: const SizedBox.expand(),
-                          ),
-                      ],
+                    return CustomPaint(
+                      painter: NeonCirclePainter(
+                        radius: rr,
+                        maxRadius: _maxRadius,
+                        pulse: distract ? _pulse.value : 0,
+                        missFlash: _missFlash.value,
+                        centerOffset: _centerOffset.value,
+                        ringAimMode: ringAim,
+                        hideMainRingStroke: true,
+                      ),
+                      child: const SizedBox.expand(),
                     );
                   },
                 ),
               ),
               Positioned.fill(child: ParticlesOverlay(events: _particleEvents)),
               Positioned.fill(child: FloatingPointsOverlay(events: _floatingPoints, centerOffset: _centerOffset)),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: Listenable.merge(<Listenable>[_shrink, _pulse, _hitPulse, _centerOffset]),
+                    builder: (BuildContext context, _) {
+                      final double r = _currentRadius;
+                      final double hitScale = 1.0 + (0.035 * (1.0 - Curves.easeOut.transform(_hitPulse.value)));
+                      final double rr = r * hitScale;
+                      return Stack(
+                        children: <Widget>[
+                          CustomPaint(
+                            painter: MainRingHudPainter(
+                              radius: rr,
+                              maxRadius: _maxRadius,
+                              pulse: distract ? _pulse.value : 0,
+                              centerOffset: _centerOffset.value,
+                            ),
+                            child: const SizedBox.expand(),
+                          ),
+                          if (ringAim)
+                            CustomPaint(
+                              painter: RingGuidePainter(
+                                centerOffset: _centerOffset.value,
+                                ringRadius: rr,
+                                halfWidth: _ringHalfWidthPx,
+                                bandGrazeOuter: _bandGrazeOuterPx,
+                                bandRimOuter: _bandRimOuterPx,
+                                bandEdgeOuter: _bandEdgeOuterPx,
+                                opacity: 1.0,
+                              ),
+                              child: const SizedBox.expand(),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
               Positioned(
                 top: 8,
                 left: 8,
