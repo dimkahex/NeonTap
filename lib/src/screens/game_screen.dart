@@ -61,7 +61,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   final ValueNotifier<Offset> _centerOffset = ValueNotifier<Offset>(Offset.zero);
 
   int _score = 0;
-  /// Consecutive PERFECTs already scored; multiplier for next PERFECT is 1 << min(chain, 4).
+  /// Consecutive PERFECTs already scored; next PERFECT uses ×2…×16 chain.
   int _perfectChain = 0;
   int _maxChainMultiplier = 1;
 
@@ -80,6 +80,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   double _bonusScoreMul = 1.0;
   Timer? _bonusTimer;
+
+  /// True while a tap is being scored — blocks [AnimationStatus.completed] from firing a spurious MISS
+  /// (the shrink tween would otherwise finish during `await Sfx.playTap()` / judgement delays).
+  bool _tapJudgementInProgress = false;
 
   @override
   void initState() {
@@ -113,6 +117,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   void _onShrinkStatus(AnimationStatus status) {
     if (status != AnimationStatus.completed) return;
+    if (_tapJudgementInProgress) return;
     // If user didn't tap in time, treat as miss.
     unawaited(_handleJudgement(HitJudgement.miss));
   }
@@ -142,37 +147,44 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _handleTap(Offset tapPos, Size screenSize) async {
-    await Sfx.playTap();
+    // Sync first: freeze radius and block shrink-complete → MISS while async work runs.
+    _tapJudgementInProgress = true;
+    _shrink.stop();
+    try {
+      await Sfx.playTap();
 
-    final Offset center = Offset(screenSize.width / 2, screenSize.height / 2) + _centerOffset.value;
-    final double tapDist = (tapPos - center).distance;
-    final double r = _currentRadius;
+      final Offset center = Offset(screenSize.width / 2, screenSize.height / 2) + _centerOffset.value;
+      final double tapDist = (tapPos - center).distance;
+      final double r = _currentRadius;
 
-    final bool ringAim = _score >= _ringAimMinScore;
-    if (ringAim) {
-      final double delta = (tapDist - r).abs();
-      if (delta > _bandEdgeOuterPx) {
-        await _handleJudgement(HitJudgement.miss);
+      final bool ringAim = _score >= _ringAimMinScore;
+      if (ringAim) {
+        final double delta = (tapDist - r).abs();
+        if (delta > _bandEdgeOuterPx) {
+          await _handleJudgement(HitJudgement.miss);
+          return;
+        }
+        if (r > TimingThresholds.rCoolOuter && tapDist < _voidEyePx) {
+          await _handleJudgement(HitJudgement.miss);
+          return;
+        }
+        if (delta <= _ringHalfWidthPx) {
+          await _handleJudgement(_judge(r));
+          return;
+        }
+        final HitJudgement timing = _judge(r);
+        if (timing == HitJudgement.miss) {
+          await _handleJudgement(HitJudgement.miss);
+          return;
+        }
+        await _handleJudgement(HitJudgement.ok);
         return;
       }
-      if (r > TimingThresholds.rCoolOuter && tapDist < _voidEyePx) {
-        await _handleJudgement(HitJudgement.miss);
-        return;
-      }
-      if (delta <= _ringHalfWidthPx) {
-        await _handleJudgement(_judge(r));
-        return;
-      }
-      final HitJudgement timing = _judge(r);
-      if (timing == HitJudgement.miss) {
-        await _handleJudgement(HitJudgement.miss);
-        return;
-      }
-      await _handleJudgement(HitJudgement.ok);
-      return;
+
+      await _handleJudgement(_judge(r));
+    } finally {
+      _tapJudgementInProgress = false;
     }
-
-    await _handleJudgement(_judge(r));
   }
 
   /// Random short score boost — procs on successful hits.
@@ -208,6 +220,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     ]);
 
     if (!mounted) return;
+
+    if (j != HitJudgement.miss) {
+      _missFlash.reset();
+    }
 
     switch (j) {
       case HitJudgement.perfect:

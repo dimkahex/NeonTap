@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../game/timing_thresholds.dart';
 
-/// Мишень из полупрозрачных неоновых колец — те же радиуды, что и [TimingThresholds].
-/// Снаружи внутрь: внешний MISS → OK (зелёный) → GOOD → COOL → PERFECT → центральная дыра MISS.
+/// Киберпанк-мишень: насыщенные неоновые кольца (cyan / magenta / золото / hot pink) + тёмная внешняя зона MISS.
+/// Радиусы совпадают с [TimingThresholds].
 class StaticScoreRingsPainter extends CustomPainter {
   StaticScoreRingsPainter({required this.centerOffset});
 
@@ -35,18 +35,25 @@ class StaticScoreRingsPainter extends CustomPainter {
     );
   }
 
-  static void _neonEdge(Canvas canvas, Offset c, double radius, Color core, Color glow) {
+  /// Двойное свечение границы — «трубка» неона.
+  static void _cyberEdge(Canvas canvas, Offset c, double radius, Color core, Color glow) {
     if (radius < 2) return;
-    final Paint soft = Paint()
+    final Paint bloom = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14)
+      ..color = glow.withValues(alpha: 0.45);
+    final Paint mid = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
-      ..color = glow.withValues(alpha: 0.35);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5)
+      ..color = core.withValues(alpha: 0.55);
     final Paint line = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4
-      ..color = core.withValues(alpha: 0.55);
-    canvas.drawCircle(c, radius, soft);
+      ..strokeWidth = 1.25
+      ..color = Color.lerp(core, Colors.white, 0.35)!.withValues(alpha: 0.75);
+    canvas.drawCircle(c, radius, bloom);
+    canvas.drawCircle(c, radius, mid);
     canvas.drawCircle(c, radius, line);
   }
 
@@ -55,68 +62,97 @@ class StaticScoreRingsPainter extends CustomPainter {
     final Offset c = Offset(size.width / 2, size.height / 2) + centerOffset;
     final double maxR = math.min(size.width, size.height) * 0.48;
 
-    // Внешняя чёрная зона (MISS) — тёмный полупрозрачный слой.
+    // Внешний MISS — глубокий фиолетово-чёрный «void».
     _fillAnnulus(
       canvas,
       c,
       maxR,
       TimingThresholds.rOkOuter,
-      const Color(0xFF050508).withValues(alpha: 0.42),
+      const Color(0xFF120018).withValues(alpha: 0.55),
+    );
+    _cyberEdge(
+      canvas,
+      c,
+      TimingThresholds.rOkOuter,
+      const Color(0xFF00E5FF),
+      const Color(0xFF00FFC6),
     );
 
-    // OK — зелёный неон.
+    // OK — электрический циан / мята.
     _fillAnnulus(
       canvas,
       c,
       TimingThresholds.rOkOuter,
       TimingThresholds.rGoodOuter,
-      const Color(0xFF2EE85A).withValues(alpha: 0.14),
+      const Color(0xFF00FFC6).withValues(alpha: 0.18),
     );
-    _neonEdge(canvas, c, TimingThresholds.rOkOuter, const Color(0xFF66FF88), const Color(0xFF2EE85A));
-    _neonEdge(canvas, c, TimingThresholds.rGoodOuter, const Color(0xFFFFB74D), const Color(0xFFFF8A25));
 
-    // GOOD — оранжевый.
+    // GOOD — неоновый магента / фуксия.
     _fillAnnulus(
       canvas,
       c,
       TimingThresholds.rGoodOuter,
       TimingThresholds.rCoolOuter,
-      const Color(0xFFFF8A25).withValues(alpha: 0.16),
+      const Color(0xFFFF00AA).withValues(alpha: 0.2),
+    );
+    _cyberEdge(
+      canvas,
+      c,
+      TimingThresholds.rGoodOuter,
+      const Color(0xFFFF2BD6),
+      const Color(0xFFFF00AA),
     );
 
-    // COOL — жёлтый.
+    // COOL — кислотное золото / янтарь.
     _fillAnnulus(
       canvas,
       c,
       TimingThresholds.rCoolOuter,
       TimingThresholds.rPerfectOuter,
-      const Color(0xFFFFEA4D).withValues(alpha: 0.15),
+      const Color(0xFFFFEA00).withValues(alpha: 0.2),
     );
-    _neonEdge(canvas, c, TimingThresholds.rCoolOuter, const Color(0xFFFFEE58), const Color(0xFFFFEA00));
+    _cyberEdge(
+      canvas,
+      c,
+      TimingThresholds.rCoolOuter,
+      const Color(0xFFFFF59D),
+      const Color(0xFFFFEA00),
+    );
 
-    // PERFECT — красно-розовый неон.
+    // PERFECT — hot pink / плазма.
     _fillAnnulus(
       canvas,
       c,
       TimingThresholds.rPerfectOuter,
       TimingThresholds.rCenterMiss,
-      const Color(0xFFFF3355).withValues(alpha: 0.17),
+      const Color(0xFFFF0080).withValues(alpha: 0.22),
     );
-    _neonEdge(canvas, c, TimingThresholds.rPerfectOuter, const Color(0xFFFF8A80), const Color(0xFFFF3355));
+    _cyberEdge(
+      canvas,
+      c,
+      TimingThresholds.rPerfectOuter,
+      const Color(0xFFFF66CC),
+      const Color(0xFFFF0080),
+    );
 
-    // Центральная «дыра» — MISS.
+    // Центральная дыра MISS — чёрный + фиолетовый ободок.
     canvas.drawCircle(
       c,
       TimingThresholds.rCenterMiss,
       Paint()
         ..style = PaintingStyle.fill
-        ..color = const Color(0xFF020208).withValues(alpha: 0.92),
+        ..color = const Color(0xFF030008).withValues(alpha: 0.94),
     );
     final Paint rim = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..color = const Color(0xFF1A1A22).withValues(alpha: 0.9);
+      ..strokeWidth = 2
+      ..color = const Color(0xFF6A00FF).withValues(alpha: 0.65);
     canvas.drawCircle(c, TimingThresholds.rCenterMiss, rim);
+    final Paint rimInner = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.9
+      ..color = const Color(0xFF00E5FF).withValues(alpha: 0.35);
+    canvas.drawCircle(c, TimingThresholds.rCenterMiss * 0.92, rimInner);
   }
 
   @override
