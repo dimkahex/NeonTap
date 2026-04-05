@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Highlights tap bands: tight ring + several wide scoring shells (GRAZE / RIM / EDGE).
+/// Highlights tap bands: main **обод** (full timing score) + outer shells GRAZE / RIM / EDGE.
+/// Drawn **above** the shrinking ring so targets stay readable.
 class RingGuidePainter extends CustomPainter {
   RingGuidePainter({
     required this.centerOffset,
@@ -26,10 +27,15 @@ class RingGuidePainter extends CustomPainter {
     final Offset c = Offset(size.width / 2, size.height / 2) + centerOffset;
     final double r = ringRadius;
 
-    void strokePair(double outer, double alphaMul, Color color) {
+    void strokePair({
+      required double outer,
+      required double alphaMul,
+      required Color color,
+      double strokeW = 2.4,
+    }) {
       final Paint p = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
+        ..strokeWidth = strokeW
         ..color = color.withValues(alpha: alphaMul * opacity);
       final double inR = r - outer;
       if (inR > 2) {
@@ -38,31 +44,51 @@ class RingGuidePainter extends CustomPainter {
       canvas.drawCircle(c, r + outer, p);
     }
 
-    // Outermost shells first (dimmer).
-    strokePair(bandEdgeOuter, 0.10, const Color(0xFF90A4AE));
-    strokePair(bandRimOuter, 0.12, const Color(0xFF78909C));
-    strokePair(bandGrazeOuter, 0.14, const Color(0xFF78909C));
+    // Outermost shells first (EDGE → RIM → GRAZE): clearer hue separation.
+    strokePair(outer: bandEdgeOuter, alphaMul: 0.38, color: const Color(0xFFB0BEC5), strokeW: 2.6);
+    strokePair(outer: bandRimOuter, alphaMul: 0.42, color: const Color(0xFFFFB74D), strokeW: 2.6);
+    strokePair(outer: bandGrazeOuter, alphaMul: 0.46, color: const Color(0xFF69F0AE), strokeW: 2.8);
 
+    // Wide shell fill (readability between the two circles of each shell).
     if (bandGrazeOuter > halfWidth + 0.5) {
-      final Paint wideBand = Paint()
+      final Paint shellFill = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = (bandGrazeOuter - halfWidth) * 2
-        ..color = const Color(0xFF78909C).withValues(alpha: 0.10 * opacity);
-      canvas.drawCircle(c, r, wideBand);
+        ..color = const Color(0xFF546E7A).withValues(alpha: 0.22 * opacity);
+      canvas.drawCircle(c, r, shellFill);
     }
+
+    // Main target band — glow + fill + crisp edges (где нужно попасть для ULTRA…OK).
+    final double bandW = halfWidth * 2;
+    final Paint glow = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = bandW + 14
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10)
+      ..color = const Color(0xFF00E5FF).withValues(alpha: 0.28 * opacity);
+    canvas.drawCircle(c, r, glow);
 
     final Paint band = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = halfWidth * 2
-      ..color = const Color(0xFF35E6FF).withValues(alpha: 0.18 * opacity);
-
+      ..strokeWidth = bandW
+      ..color = const Color(0xFF00E5FF).withValues(alpha: 0.40 * opacity);
     canvas.drawCircle(c, r, band);
 
-    final Paint edge = Paint()
+    final Paint rimInner = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..color = Colors.white.withValues(alpha: 0.45 * opacity);
-    canvas.drawCircle(c, r, edge);
+      ..strokeWidth = 2.8
+      ..color = Colors.white.withValues(alpha: 0.88 * opacity);
+    final double ri = (r - halfWidth).clamp(0.0, double.infinity);
+    final double ro = r + halfWidth;
+    if (ri > 2) {
+      canvas.drawCircle(c, ri, rimInner);
+    }
+    canvas.drawCircle(c, ro, rimInner);
+
+    final Paint mid = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..color = const Color(0xFFFFEA00).withValues(alpha: 0.75 * opacity);
+    canvas.drawCircle(c, r, mid);
   }
 
   @override

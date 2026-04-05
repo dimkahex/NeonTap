@@ -428,6 +428,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     final double rr = r * hitScale;
                     return Stack(
                       children: <Widget>[
+                        CustomPaint(
+                          painter: NeonCirclePainter(
+                            radius: rr,
+                            maxRadius: _maxRadius,
+                            pulse: distract ? _pulse.value : 0,
+                            missFlash: _missFlash.value,
+                            centerOffset: _centerOffset.value,
+                            ringAimMode: ringAim,
+                          ),
+                          child: const SizedBox.expand(),
+                        ),
                         if (ringAim)
                           CustomPaint(
                             painter: RingGuidePainter(
@@ -441,16 +452,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             ),
                             child: const SizedBox.expand(),
                           ),
-                        CustomPaint(
-                          painter: NeonCirclePainter(
-                            radius: rr,
-                            maxRadius: _maxRadius,
-                            pulse: distract ? _pulse.value : 0,
-                            missFlash: _missFlash.value,
-                            centerOffset: _centerOffset.value,
-                          ),
-                          child: const SizedBox.expand(),
-                        ),
                       ],
                     );
                   },

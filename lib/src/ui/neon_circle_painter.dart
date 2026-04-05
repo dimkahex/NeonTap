@@ -12,6 +12,7 @@ class NeonCirclePainter extends CustomPainter {
     required this.pulse,
     required this.missFlash,
     required this.centerOffset,
+    this.ringAimMode = false,
   });
 
   final double radius;
@@ -19,6 +20,8 @@ class NeonCirclePainter extends CustomPainter {
   final double pulse; // 0..1
   final double missFlash; // 0..1
   final Offset centerOffset;
+  /// When true, fades static **timing** circles (center distance) so **обод** overlay reads clearer.
+  final bool ringAimMode;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -54,11 +57,12 @@ class NeonCirclePainter extends CustomPainter {
       ..strokeWidth = 6
       ..color = core.withOpacity(0.95);
 
-    // Zone rings — same radii as GameScreen._judge (ULTRA / PERFECT / GOOD / OK)
-    _ring(canvas, c, 72, Colors.orangeAccent.withOpacity(0.35));
-    _ring(canvas, c, 48, const Color(0xFF2CFF7B).withOpacity(0.45));
-    _ring(canvas, c, 28, const Color(0xFFFFE082).withOpacity(0.55), width: 2.5);
-    _ring(canvas, c, 110, Colors.white.withOpacity(0.10), width: 1.5); // OK zone (wide / low points)
+    // Zone rings — timing (distance to center); dimmed in ring-aim mode vs. обод overlay.
+    final double g = ringAimMode ? 0.28 : 1.0;
+    _ring(canvas, c, 72, Colors.orangeAccent.withOpacity(0.35 * g));
+    _ring(canvas, c, 48, const Color(0xFF2CFF7B).withOpacity(0.45 * g));
+    _ring(canvas, c, 28, const Color(0xFFFFE082).withOpacity(0.55 * g), width: 2.5);
+    _ring(canvas, c, 110, Colors.white.withOpacity(0.10 * g), width: 1.5);
 
     canvas.drawCircle(c, r * 1.02 * distract, outerGlow);
     canvas.drawCircle(c, r * distract, ring);
@@ -83,7 +87,8 @@ class NeonCirclePainter extends CustomPainter {
         oldDelegate.maxRadius != maxRadius ||
         oldDelegate.pulse != pulse ||
         oldDelegate.missFlash != missFlash ||
-        oldDelegate.centerOffset != centerOffset;
+        oldDelegate.centerOffset != centerOffset ||
+        oldDelegate.ringAimMode != ringAimMode;
   }
 }
 
