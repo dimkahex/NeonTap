@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// Thin stroke for the shrinking **main** ring — above particles; keeps distract motion, not a thick “target”.
+/// Shrinking **play** ring — magenta signature glow so it never reads as a static tier ring.
 class MainRingHudPainter extends CustomPainter {
   MainRingHudPainter({
     required this.radius,
@@ -15,6 +15,9 @@ class MainRingHudPainter extends CustomPainter {
   final double maxRadius;
   final double pulse;
   final Offset centerOffset;
+
+  /// Hot accent — not used by static score rings (green/gold/orange/violet tiers).
+  static const Color _signatureGlow = Color(0xFFFF2BD6);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -30,22 +33,36 @@ class MainRingHudPainter extends CustomPainter {
     final double distract = 1.0 + (0.06 * math.sin(pulse * math.pi * 2));
     final double rd = r * distract;
 
+    final Paint signature = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 16
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18)
+      ..color = _signatureGlow.withValues(alpha: 0.34);
+    canvas.drawCircle(c, rd, signature);
+
+    final Paint signature2 = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6)
+      ..color = _signatureGlow.withValues(alpha: 0.55);
+    canvas.drawCircle(c, rd, signature2);
+
     final Paint silhouette = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.2
-      ..color = const Color(0xFF010203).withValues(alpha: 0.55);
+      ..strokeWidth = 4.0
+      ..color = const Color(0xFF020308).withValues(alpha: 0.62);
     canvas.drawCircle(c, rd, silhouette);
 
     final Paint ring = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4
-      ..color = core.withValues(alpha: 0.98);
+      ..strokeWidth = 3.2
+      ..color = core.withValues(alpha: 1.0);
     canvas.drawCircle(c, rd, ring);
 
     final Paint rim = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
-      ..color = Colors.white.withValues(alpha: 0.88);
+      ..strokeWidth = 1.35
+      ..color = Colors.white.withValues(alpha: 0.95);
     canvas.drawCircle(c, rd, rim);
   }
 

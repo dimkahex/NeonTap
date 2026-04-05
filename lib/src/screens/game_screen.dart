@@ -382,13 +382,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     Navigator.of(context).pushReplacementNamed(ResultsScreen.route, arguments: result);
   }
 
-  /// Spiral visible from the first frame; intensity ramps with score.
+  /// Spiral visible from the first frame; intensity ramps with score (capped so it does not drown the playfield).
   double _spiralIntensityForScore(int s) {
-    if (s < 40) return 0.20;
-    if (s < 120) return 0.38;
-    if (s < 250) return 0.55;
-    if (s < 400) return 0.78;
-    return 0.95;
+    if (s < 40) return 0.16;
+    if (s < 120) return 0.28;
+    if (s < 250) return 0.40;
+    if (s < 400) return 0.52;
+    return 0.64;
   }
 
   @override
@@ -396,8 +396,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     final Difficulty d = difficultyForScore(_score);
     final bool distract = d.pulseDistract;
-    final double spiralIntensity = _spiralIntensityForScore(_score);
     final bool ringAim = _score >= _ringAimMinScore;
+    final double spiralIntensity =
+        _spiralIntensityForScore(_score) * (ringAim ? 0.64 : 1.0);
 
     return PopScope(
       canPop: false,
@@ -478,7 +479,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 bandGrazeOuter: _bandGrazeOuterPx,
                                 bandRimOuter: _bandRimOuterPx,
                                 bandEdgeOuter: _bandEdgeOuterPx,
-                                opacity: 1.0,
+                                opacity: 0.48,
                               ),
                               child: const SizedBox.expand(),
                             ),

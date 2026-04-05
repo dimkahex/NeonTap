@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Thin guide for **обод** + GRAZE / RIM / EDGE shells (relative to shrinking ring radius).
-/// Drawn above static score rings; avoids heavy fills that read as “extra” targets.
+/// Subtle guide for обод + shells after score 35 — intentionally **muted** so the play ring stays dominant.
 class RingGuidePainter extends CustomPainter {
   RingGuidePainter({
     required this.centerOffset,
@@ -29,21 +28,15 @@ class RingGuidePainter extends CustomPainter {
 
     void strokePair({
       required double outer,
-      required double alphaMul,
       required Color color,
-      double strokeW = 1.9,
+      double strokeW = 0.85,
     }) {
       void one(double radiusPx) {
         if (radiusPx <= 1) return;
-        final Paint sh = Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = strokeW + 1.6
-          ..color = const Color(0xFF000000).withValues(alpha: 0.42 * opacity * alphaMul);
-        canvas.drawCircle(c, radiusPx, sh);
         final Paint p = Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = strokeW
-          ..color = color.withValues(alpha: 0.92 * alphaMul * opacity);
+          ..color = color.withValues(alpha: 0.5 * opacity);
         canvas.drawCircle(c, radiusPx, p);
       }
 
@@ -54,15 +47,14 @@ class RingGuidePainter extends CustomPainter {
       one(r + outer);
     }
 
-    strokePair(outer: bandEdgeOuter, alphaMul: 1.0, color: const Color(0xFFB0BEC5), strokeW: 1.85);
-    strokePair(outer: bandRimOuter, alphaMul: 1.0, color: const Color(0xFFFFB74D), strokeW: 1.85);
-    strokePair(outer: bandGrazeOuter, alphaMul: 1.0, color: const Color(0xFF69F0AE), strokeW: 1.95);
+    strokePair(outer: bandEdgeOuter, color: const Color(0xFF90A4AE), strokeW: 0.8);
+    strokePair(outer: bandRimOuter, color: const Color(0xFFFFB74D), strokeW: 0.8);
+    strokePair(outer: bandGrazeOuter, color: const Color(0xFF81C784), strokeW: 0.85);
 
-    // Main band: two thin rims (no thick “tube”).
     final Paint rimInner = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..color = Colors.white.withValues(alpha: 0.92 * opacity);
+      ..strokeWidth = 1.15
+      ..color = Colors.white.withValues(alpha: 0.45 * opacity);
     final double ri = (r - halfWidth).clamp(0.0, double.infinity);
     final double ro = r + halfWidth;
     if (ri > 2) {
@@ -72,8 +64,8 @@ class RingGuidePainter extends CustomPainter {
 
     final Paint mid = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.25
-      ..color = const Color(0xFFFFEA00).withValues(alpha: 0.82 * opacity);
+      ..strokeWidth = 0.75
+      ..color = const Color(0xFFFFEE58).withValues(alpha: 0.42 * opacity);
     canvas.drawCircle(c, r, mid);
   }
 

@@ -111,7 +111,7 @@ class _RingPreviewPageState extends State<RingPreviewPage> {
                         bandGrazeOuter: _bandGrazeOuterPx,
                         bandRimOuter: _bandRimOuterPx,
                         bandEdgeOuter: _bandEdgeOuterPx,
-                        opacity: 1,
+                        opacity: 0.48,
                       ),
                       child: const SizedBox.expand(),
                     ),
