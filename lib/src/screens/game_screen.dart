@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app_version.dart';
@@ -88,6 +89,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   /// Set when a shrink cycle starts — ignore impossible instant `completed` callbacks (controller quirks).
   DateTime _shrinkCycleStartedAt = DateTime.now();
 
+  /// Плавное наращивание амплитуды дрейфа (без рывка при 70 / 400+ очках).
+  double _driftAmpSmooth = 0;
+
+  late final AnimationController _spectacle;
+  final math.Random _spectacleRng = math.Random();
+  int? _nextRandomSpectacle;
+
   @override
   void initState() {
     super.initState();
@@ -99,7 +107,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..repeat();
     _missFlash = AnimationController(vsync: this, duration: const Duration(milliseconds: 180));
     _hitPulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 140));
-    _drift = AnimationController(vsync: this, duration: const Duration(milliseconds: 3200))
+    _spectacle = AnimationController(vsync: this, duration: const Duration(milliseconds: 680));
+    _drift = AnimationController(vsync: this, duration: const Duration(milliseconds: 5200))
       ..addListener(_updateDrift)
       ..repeat();
   }
@@ -113,6 +122,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _pulse.dispose();
     _missFlash.dispose();
     _hitPulse.dispose();
+    _spectacle.dispose();
     _drift.dispose();
     _centerOffset.dispose();
     Sfx.stop();
@@ -232,8 +242,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _slowMoFor(const Duration(seconds: 5));
         await Future<void>.delayed(const Duration(milliseconds: 120));
         if (!mounted) return;
+        final int scoreBefore = _score;
         setState(() => _score += add);
         _maybeRollBonus();
+        _checkSpectacles(scoreBefore, _score);
         _restartCycle(scoreAfterTap: _score);
         return;
       case HitJudgement.cool:
@@ -245,8 +257,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _showBigText(j.locLabel(l10n), scale: 1.08, glow: false);
         await Future<void>.delayed(const Duration(milliseconds: 110));
         if (!mounted) return;
+        final int scoreBeforeCool = _score;
         setState(() => _score += add);
         _maybeRollBonus();
+        _checkSpectacles(scoreBeforeCool, _score);
         _restartCycle(scoreAfterTap: _score);
         return;
       case HitJudgement.good:
@@ -258,8 +272,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _showBigText(j.locLabel(l10n), scale: 1.06, glow: false);
         await Future<void>.delayed(const Duration(milliseconds: 110));
         if (!mounted) return;
+        final int scoreBeforeGood = _score;
         setState(() => _score += add);
         _maybeRollBonus();
+        _checkSpectacles(scoreBeforeGood, _score);
         _restartCycle(scoreAfterTap: _score);
         return;
       case HitJudgement.ok:
@@ -271,8 +287,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _showBigText(j.locLabel(l10n), scale: 1.02, glow: false);
         await Future<void>.delayed(const Duration(milliseconds: 110));
         if (!mounted) return;
+        final int scoreBeforeOk = _score;
         setState(() => _score += add);
         _maybeRollBonus();
+        _checkSpectacles(scoreBeforeOk, _score);
         _restartCycle(scoreAfterTap: _score);
         return;
       case HitJudgement.miss:
@@ -287,13 +305,49 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void _updateDrift() {
+    const double lerpK = 0.045;
     if (_score < _driftMinScore) {
-      if (_centerOffset.value != Offset.zero) _centerOffset.value = Offset.zero;
+      _driftAmpSmooth += (0.0 - _driftAmpSmooth) * lerpK;
+      final Offset o = _centerOffset.value;
+      _centerOffset.value = Offset.lerp(o, Offset.zero, 0.088)!;
+      if (_centerOffset.value.distance < 0.4 && _driftAmpSmooth < 0.06) {
+        _centerOffset.value = Offset.zero;
+        _driftAmpSmooth = 0;
+      }
       return;
     }
+    final double targetAmp = _score >= 400 ? 18.0 : 10.0;
+    _driftAmpSmooth += (targetAmp - _driftAmpSmooth) * lerpK;
+    final double amp = _driftAmpSmooth;
     final double t = _drift.value * math.pi * 2;
-    final double amp = (_score >= 400 ? 18.0 : 10.0);
-    _centerOffset.value = Offset(math.sin(t * 0.9) * amp, math.cos(t * 1.1) * (amp * 0.7));
+    // Две близкие гармоники — траектория без «рёбер», движение мягче.
+    final double ox = math.sin(t * 0.9) * amp + math.sin(t * 1.73) * amp * 0.15;
+    final double oy = math.cos(t * 1.1) * amp * 0.72 + math.cos(t * 1.95) * amp * 0.11;
+    _centerOffset.value = Offset(ox, oy);
+  }
+
+  /// Вехи 2000 / 2300 / 2500 и дальше случайные интервалы — вспышка + частицы.
+  void _checkSpectacles(int before, int after) {
+    if (after <= before) return;
+    for (final int m in <int>[2000, 2300, 2500]) {
+      if (before < m && after >= m) {
+        _fireSpectacle();
+      }
+    }
+    if (after < 2500) return;
+    _nextRandomSpectacle ??= after + 140 + _spectacleRng.nextInt(380);
+    while (_nextRandomSpectacle != null && after >= _nextRandomSpectacle!) {
+      _fireSpectacle();
+      _nextRandomSpectacle = _nextRandomSpectacle! + 130 + _spectacleRng.nextInt(520);
+    }
+  }
+
+  void _fireSpectacle() {
+    if (!mounted) return;
+    _spectacle.forward(from: 0);
+    final int s = DateTime.now().microsecondsSinceEpoch & 0x7fffffff;
+    emitParticleEvent(_particleEvents, HitJudgement.perfect, s, intensity: 2.4);
+    unawaited(HapticFeedback.mediumImpact());
   }
 
   /// Visual / combo gate only — does **not** drive [_shrink] after a tap.
@@ -437,6 +491,32 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 ),
               ),
               Positioned.fill(child: ParticlesOverlay(events: _particleEvents)),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _spectacle,
+                    builder: (BuildContext context, Widget? child) {
+                      final double v = _spectacle.value;
+                      final double flash = math.sin(v * math.pi);
+                      if (flash < 0.02) return const SizedBox.shrink();
+                      return DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: RadialGradient(
+                            center: const Alignment(0, -0.18),
+                            radius: 1.12,
+                            colors: <Color>[
+                              const Color(0xFF35E6FF).withValues(alpha: flash * 0.48),
+                              const Color(0xFFE040FB).withValues(alpha: flash * 0.36),
+                              const Color(0x00000000),
+                            ],
+                            stops: const <double>[0.0, 0.42, 1.0],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
               Positioned.fill(child: FloatingPointsOverlay(events: _floatingPoints, centerOffset: _centerOffset)),
               Positioned.fill(
                 child: IgnorePointer(
