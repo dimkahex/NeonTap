@@ -13,7 +13,7 @@
   "menuFooterRankings": "Rankings: local now • cloud in the final build",
   "splashGlobalCompetition": "GLOBAL COMPETITION",
   "gameEndRunTooltip": "End run",
-  "gameAimHint": "AIM: inner ring = full score; outer shells = GRAZE / RIM / EDGE (1pt each)",
+  "gameAimHint": "Timing: closer to center = more points (up to +10). Wide band miss: three \"bracket\" zones (near/mid/far from the ring), 1 pt each.",
   "gameWarmupHint": "Warm-up — ring aim starts soon",
   "gameScoreX2": "SCORE x2",
   "gameStage": "Stage {stage} · {seconds}s",
@@ -24,13 +24,13 @@
     }
   },
   "gameRankRising": "RANK RISING!",
-  "judgementGraze": "GRAZE",
-  "judgementRim": "RIM",
-  "judgementEdge": "EDGE",
-  "judgementOk": "OK",
-  "judgementUltra": "ULTRA",
-  "judgementPerfect": "PERFECT",
-  "judgementGood": "GOOD",
+  "judgementGraze": "BRACKET (near) +1",
+  "judgementRim": "BRACKET (mid) +1",
+  "judgementEdge": "BRACKET (far) +1",
+  "judgementOk": "OK +2",
+  "judgementUltra": "ULTRA +10",
+  "judgementPerfect": "PERFECT +5",
+  "judgementGood": "GOOD +2",
   "judgementMiss": "MISS",
   "resultsDefeat": "DEFEAT",
   "resultsRunOver": "RUN OVER",
@@ -44,7 +44,7 @@
     }
   },
   "resultsHitBreakdown": "HIT BREAKDOWN",
-  "resultsBreakdown": "U {u}  P {p}  G {g}  OK {ok}  GZ {gz}  RIM {rim}  EDGE {edge}",
+  "resultsBreakdown": "Timing: ultra {u} · perfect {p} · good {g} · ok {ok}. Brackets (+1): near {gz} · mid {rim} · far {edge}",
   "@resultsBreakdown": {
     "placeholders": {
       "u": {"type": "int"},

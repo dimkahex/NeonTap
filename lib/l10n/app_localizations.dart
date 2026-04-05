@@ -179,7 +179,7 @@ abstract class AppLocalizations {
   /// No description provided for @gameAimHint.
   ///
   /// In en, this message translates to:
-  /// **'AIM: inner ring = full score; outer shells = GRAZE / RIM / EDGE (1pt each)'**
+  /// **'Timing: closer to center = more points (up to +10). Wide band miss: three \"bracket\" zones (near/mid/far from the ring), 1 pt each.'**
   String get gameAimHint;
 
   /// No description provided for @gameWarmupHint.
@@ -209,43 +209,43 @@ abstract class AppLocalizations {
   /// No description provided for @judgementGraze.
   ///
   /// In en, this message translates to:
-  /// **'GRAZE'**
+  /// **'BRACKET (near) +1'**
   String get judgementGraze;
 
   /// No description provided for @judgementRim.
   ///
   /// In en, this message translates to:
-  /// **'RIM'**
+  /// **'BRACKET (mid) +1'**
   String get judgementRim;
 
   /// No description provided for @judgementEdge.
   ///
   /// In en, this message translates to:
-  /// **'EDGE'**
+  /// **'BRACKET (far) +1'**
   String get judgementEdge;
 
   /// No description provided for @judgementOk.
   ///
   /// In en, this message translates to:
-  /// **'OK'**
+  /// **'OK +2'**
   String get judgementOk;
 
   /// No description provided for @judgementUltra.
   ///
   /// In en, this message translates to:
-  /// **'ULTRA'**
+  /// **'ULTRA +10'**
   String get judgementUltra;
 
   /// No description provided for @judgementPerfect.
   ///
   /// In en, this message translates to:
-  /// **'PERFECT'**
+  /// **'PERFECT +5'**
   String get judgementPerfect;
 
   /// No description provided for @judgementGood.
   ///
   /// In en, this message translates to:
-  /// **'GOOD'**
+  /// **'GOOD +2'**
   String get judgementGood;
 
   /// No description provided for @judgementMiss.
@@ -299,7 +299,7 @@ abstract class AppLocalizations {
   /// No description provided for @resultsBreakdown.
   ///
   /// In en, this message translates to:
-  /// **'U {u}  P {p}  G {g}  OK {ok}  GZ {gz}  RIM {rim}  EDGE {edge}'**
+  /// **'Timing: ultra {u} · perfect {p} · good {g} · ok {ok}. Brackets (+1): near {gz} · mid {rim} · far {edge}'**
   String resultsBreakdown(
       int u, int p, int g, int ok, int gz, int rim, int edge);
 

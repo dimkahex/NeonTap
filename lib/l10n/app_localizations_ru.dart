@@ -51,7 +51,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gameAimHint =>
-      'ЦЕЛЬ: внутреннее кольцо = полный счёт; внешние зоны = GRAZE / RIM / EDGE (по 1 очку)';
+      'Тайминг: чем ближе кольцо к центру — тем больше очков (до +10). В полосу, но промах по ширине — три «края» ближе/дальше от кольца, всегда по 1 очку.';
 
   @override
   String get gameWarmupHint => 'Разминка — скоро появится прицел кольца';
@@ -68,28 +68,28 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gameRankRising => 'РЕЙТИНГ РАСТЁТ!';
 
   @override
-  String get judgementGraze => 'GRAZE';
+  String get judgementGraze => 'КРАЙ (близко) · 1';
 
   @override
-  String get judgementRim => 'RIM';
+  String get judgementRim => 'КРАЙ (середина) · 1';
 
   @override
-  String get judgementEdge => 'EDGE';
+  String get judgementEdge => 'КРАЙ (далеко) · 1';
 
   @override
-  String get judgementOk => 'OK';
+  String get judgementOk => 'НОРМА +2';
 
   @override
-  String get judgementUltra => 'ULTRA';
+  String get judgementUltra => 'УЛЬТРА +10';
 
   @override
-  String get judgementPerfect => 'PERFECT';
+  String get judgementPerfect => 'ИДЕАЛ +5';
 
   @override
-  String get judgementGood => 'GOOD';
+  String get judgementGood => 'ХОРОШО +2';
 
   @override
-  String get judgementMiss => 'MISS';
+  String get judgementMiss => 'ПРОМАХ';
 
   @override
   String get resultsDefeat => 'ПОРАЖЕНИЕ';
@@ -117,7 +117,7 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String resultsBreakdown(
       int u, int p, int g, int ok, int gz, int rim, int edge) {
-    return 'U $u  P $p  G $g  OK $ok  GZ $gz  RIM $rim  EDGE $edge';
+    return 'Тайминг: ультра $u · идеал $p · хорошо $g · норма $ok. У края (по 1): близко $gz · сер. $rim · далеко $edge';
   }
 
   @override
