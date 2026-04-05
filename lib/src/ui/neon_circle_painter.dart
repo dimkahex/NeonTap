@@ -1,9 +1,6 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
-
-import '../theme/neon_theme.dart';
 
 class NeonCirclePainter extends CustomPainter {
   NeonCirclePainter({
