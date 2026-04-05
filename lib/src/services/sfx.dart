@@ -115,19 +115,15 @@ class Sfx {
     }
   }
 
-  /// After a successful hit (good/ok/perfect/ultra).
+  /// After a successful hit (good/ok/perfect).
   static Future<void> playHit(HitJudgement j) async {
     if (!_soundEnabled) {
       return;
     }
     final String asset = switch (j) {
-      HitJudgement.ultra => 'sfx/perfect_hit.wav',
       HitJudgement.perfect => 'sfx/perfect_hit.wav',
       HitJudgement.good => 'sfx/good_tick.wav',
       HitJudgement.ok => 'sfx/ok_click.wav',
-      HitJudgement.graze => 'sfx/ok_click.wav',
-      HitJudgement.rim => 'sfx/ok_click.wav',
-      HitJudgement.edge => 'sfx/ok_click.wav',
       HitJudgement.miss => 'sfx/miss_error.wav',
     };
     try {

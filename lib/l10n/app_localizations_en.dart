@@ -51,7 +51,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gameAimHint =>
-      'Timing: closer to center = more points (up to +10). Wide band miss: three \"bracket\" zones (near/mid/far from the ring), 1 pt each.';
+      'AIM: hit the shrinking ring. In the band = PERFECT / GOOD / OK by timing. Outside the band but still near the ring = OK. PERFECT chains: x1 → x2 → x4 → x8 → x16; GOOD or OK resets the chain.';
 
   @override
   String get gameWarmupHint => 'Warm-up — ring aim starts soon';
@@ -68,25 +68,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gameRankRising => 'RANK RISING!';
 
   @override
-  String get judgementGraze => 'BRACKET (near) +1';
+  String get judgementOk => 'OK';
 
   @override
-  String get judgementRim => 'BRACKET (mid) +1';
+  String get judgementPerfect => 'PERFECT';
 
   @override
-  String get judgementEdge => 'BRACKET (far) +1';
-
-  @override
-  String get judgementOk => 'OK +2';
-
-  @override
-  String get judgementUltra => 'ULTRA +10';
-
-  @override
-  String get judgementPerfect => 'PERFECT +5';
-
-  @override
-  String get judgementGood => 'GOOD +2';
+  String get judgementGood => 'GOOD';
 
   @override
   String get judgementMiss => 'MISS';
@@ -115,9 +103,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resultsHitBreakdown => 'HIT BREAKDOWN';
 
   @override
-  String resultsBreakdown(
-      int u, int p, int g, int ok, int gz, int rim, int edge) {
-    return 'Timing: ultra $u · perfect $p · good $g · ok $ok. Brackets (+1): near $gz · mid $rim · far $edge';
+  String resultsBreakdown(int perfect, int good, int ok) {
+    return 'PERFECT $perfect · GOOD $good · OK $ok';
   }
 
   @override

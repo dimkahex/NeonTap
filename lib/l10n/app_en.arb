@@ -13,7 +13,7 @@
   "menuFooterRankings": "Rankings: local now • cloud in the final build",
   "splashGlobalCompetition": "GLOBAL COMPETITION",
   "gameEndRunTooltip": "End run",
-  "gameAimHint": "Timing: closer to center = more points (up to +10). Wide band miss: three \"bracket\" zones (near/mid/far from the ring), 1 pt each.",
+  "gameAimHint": "AIM: hit the shrinking ring. In the band = PERFECT / GOOD / OK by timing. Outside the band but still near the ring = OK. PERFECT chains: x1 → x2 → x4 → x8 → x16; GOOD or OK resets the chain.",
   "gameWarmupHint": "Warm-up — ring aim starts soon",
   "gameScoreX2": "SCORE x2",
   "gameStage": "Stage {stage} · {seconds}s",
@@ -24,13 +24,9 @@
     }
   },
   "gameRankRising": "RANK RISING!",
-  "judgementGraze": "BRACKET (near) +1",
-  "judgementRim": "BRACKET (mid) +1",
-  "judgementEdge": "BRACKET (far) +1",
-  "judgementOk": "OK +2",
-  "judgementUltra": "ULTRA +10",
-  "judgementPerfect": "PERFECT +5",
-  "judgementGood": "GOOD +2",
+  "judgementOk": "OK",
+  "judgementPerfect": "PERFECT",
+  "judgementGood": "GOOD",
   "judgementMiss": "MISS",
   "resultsDefeat": "DEFEAT",
   "resultsRunOver": "RUN OVER",
@@ -44,16 +40,12 @@
     }
   },
   "resultsHitBreakdown": "HIT BREAKDOWN",
-  "resultsBreakdown": "Timing: ultra {u} · perfect {p} · good {g} · ok {ok}. Brackets (+1): near {gz} · mid {rim} · far {edge}",
+  "resultsBreakdown": "PERFECT {perfect} · GOOD {good} · OK {ok}",
   "@resultsBreakdown": {
     "placeholders": {
-      "u": {"type": "int"},
-      "p": {"type": "int"},
-      "g": {"type": "int"},
-      "ok": {"type": "int"},
-      "gz": {"type": "int"},
-      "rim": {"type": "int"},
-      "edge": {"type": "int"}
+      "perfect": {"type": "int"},
+      "good": {"type": "int"},
+      "ok": {"type": "int"}
     }
   },
   "resultsBestCombo": "BEST COMBO",

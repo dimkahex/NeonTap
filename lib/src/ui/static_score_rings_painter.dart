@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 
-/// Fixed-radius **timing** circles — same thresholds as `_judge` in `game_screen.dart`.
-/// Neon palette + soft glow; drawn above particles.
+/// Fixed-radius timing circles — must match `_rPerfect` / `_rGood` / `_rOkOuter` in `game_screen.dart`.
 class StaticScoreRingsPainter extends CustomPainter {
   StaticScoreRingsPainter({required this.centerOffset});
 
   final Offset centerOffset;
 
-  static const double _rUltra = 28;
-  static const double _rPerfect = 48;
-  static const double _rGood = 72;
-  static const double _rOk = 110;
+  static const double _rPerfect = 30;
+  static const double _rGood = 52;
+  static const double _rOk = 140;
 
-  /// Neon core + matching glow (wider soft stroke behind).
   static void _neonRing(
     Canvas canvas,
     Offset c,
@@ -51,7 +48,6 @@ class StaticScoreRingsPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final Offset c = Offset(size.width / 2, size.height / 2) + centerOffset;
 
-    // Outside → inside (inner rings painted last = crisp on top).
     _neonRing(
       canvas,
       c,
@@ -72,14 +68,6 @@ class StaticScoreRingsPainter extends CustomPainter {
       canvas,
       c,
       _rPerfect,
-      core: const Color(0xFF64FFDA),
-      glow: const Color(0xFF00E676),
-      lineWidth: 2.65,
-    );
-    _neonRing(
-      canvas,
-      c,
-      _rUltra,
       core: const Color(0xFFFFF59D),
       glow: const Color(0xFFFFEA00),
       lineWidth: 2.8,

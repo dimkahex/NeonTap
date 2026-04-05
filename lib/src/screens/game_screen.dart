@@ -38,10 +38,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   static const double _maxRadius = 270;
   /// Half-width of the "ring" band — tap must land on the shrinking circle (not random screen tap).
   static const double _ringHalfWidthPx = 30;
-  /// Outer edges of scoring shells (|tap radius − ring|) — graze / rim / edge (minimal points).
+  /// Visual guide only (shell lines); scoring uses main strip + single outer limit [_bandEdgeOuterPx].
   static const double _bandGrazeOuterPx = 52;
   static const double _bandRimOuterPx = 72;
+  /// Outer edge of scoring band (|tap radius − ring|) beyond main strip — still OK if timing valid.
   static const double _bandEdgeOuterPx = 92;
+  /// Timing tiers by shrinking radius (px). OK zone widened vs old 110.
+  static const double _rPerfect = 30;
+  static const double _rGood = 52;
+  static const double _rOkOuter = 140;
   /// Decorative spiral "eye" — if the ring is far out, tapping the eye is a miss.
   static const double _voidEyePx = 16;
   /// Ring aim + spiral visible early (was 150 — too long to notice in a short run).
@@ -59,16 +64,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   final ValueNotifier<Offset> _centerOffset = ValueNotifier<Offset>(Offset.zero);
 
   int _score = 0;
-  int _comboPow = 0; // 0..4 => x1..x16
-  int _bestComboPow = 0;
+  /// Consecutive PERFECTs already scored; multiplier for next PERFECT is 1 << min(chain, 4).
+  int _perfectChain = 0;
+  int _maxChainMultiplier = 1;
 
-  int _hitsUltra = 0;
   int _hitsPerfect = 0;
   int _hitsGood = 0;
   int _hitsOk = 0;
-  int _hitsGraze = 0;
-  int _hitsRim = 0;
-  int _hitsEdge = 0;
 
   String? _bigText;
   double _bigTextScale = 1;
@@ -122,7 +124,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return _maxRadius * (1 - t);
   }
 
-  int get _comboMultiplier => 1 << _comboPow;
+  /// Next PERFECT tap uses this multiplier (x1…x16).
+  int get _nextPerfectMultiplier => 1 << _perfectChain.clamp(0, 4);
 
   void _restartCycle({required int scoreAfterTap}) {
     final Difficulty d = difficultyForScore(scoreAfterTap);
@@ -131,12 +134,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _shrink.forward(from: 0);
   }
 
-  /// Timing tiers by ring radius (px). ULTRA was r<15 — too narrow vs shrink speed; widened for fair play.
   HitJudgement _judge(double r) {
-    if (r < 28) return HitJudgement.ultra;
-    if (r < 48) return HitJudgement.perfect;
-    if (r < 72) return HitJudgement.good;
-    if (r < 110) return HitJudgement.ok;
+    if (r < _rPerfect) return HitJudgement.perfect;
+    if (r < _rGood) return HitJudgement.good;
+    if (r < _rOkOuter) return HitJudgement.ok;
     return HitJudgement.miss;
   }
 
@@ -158,27 +159,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         await _handleJudgement(HitJudgement.miss);
         return;
       }
+      if (delta <= _ringHalfWidthPx) {
+        await _handleJudgement(_judge(r));
+        return;
+      }
       final HitJudgement timing = _judge(r);
       if (timing == HitJudgement.miss) {
         await _handleJudgement(HitJudgement.miss);
         return;
       }
-      final HitJudgement j;
-      if (delta <= _ringHalfWidthPx) {
-        j = timing;
-      } else if (delta <= _bandGrazeOuterPx) {
-        j = HitJudgement.graze;
-      } else if (delta <= _bandRimOuterPx) {
-        j = HitJudgement.rim;
-      } else {
-        j = HitJudgement.edge;
-      }
-      await _handleJudgement(j);
+      await _handleJudgement(HitJudgement.ok);
       return;
     }
 
-    final HitJudgement j = _judge(r);
-    await _handleJudgement(j);
+    await _handleJudgement(_judge(r));
   }
 
   /// Random short score boost — procs on successful hits.
@@ -200,13 +194,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     final int seed = DateTime.now().microsecondsSinceEpoch & 0x7fffffff;
     final double intensity = switch (j) {
-      HitJudgement.ultra => 1.55,
-      HitJudgement.perfect => 1.25,
-      HitJudgement.good => 1.05,
-      HitJudgement.ok => 0.9,
-      HitJudgement.graze => 0.82,
-      HitJudgement.rim => 0.78,
-      HitJudgement.edge => 0.74,
+      HitJudgement.perfect => 1.45,
+      HitJudgement.good => 1.08,
+      HitJudgement.ok => 0.95,
       HitJudgement.miss => 0.95,
     };
     emitParticleEvent(_particleEvents, j, seed, intensity: intensity);
@@ -219,15 +209,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (!mounted) return;
 
     switch (j) {
-      case HitJudgement.ultra:
-        _hitsUltra++;
-        final int comboCap = difficultyForScore(_score).comboMaxPow;
-        _comboPow = (_comboPow + 1).clamp(0, comboCap);
-        _bestComboPow = math.max(_bestComboPow, _comboPow);
-        final int add = (j.basePoints * _comboMultiplier * _bonusScoreMul).round();
+      case HitJudgement.perfect:
+        _hitsPerfect++;
+        final int mult = 1 << _perfectChain.clamp(0, 4);
+        _maxChainMultiplier = math.max(_maxChainMultiplier, mult);
+        final int add = (j.basePoints * mult * _bonusScoreMul).round();
+        _perfectChain++;
         emitFloatingPoints(_floatingPoints, value: add, j: j, seed: seed);
         _hitPulse.forward(from: 0);
-        _showBigText(j.locLabel(l10n), scale: 1.16, glow: true);
+        _showBigText(j.locLabel(l10n), scale: 1.14, glow: true);
         _slowMoFor(const Duration(seconds: 5));
         await Future<void>.delayed(const Duration(milliseconds: 120));
         if (!mounted) return;
@@ -235,42 +225,26 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _maybeRollBonus();
         _restartCycle(scoreAfterTap: _score);
         return;
-      case HitJudgement.perfect:
       case HitJudgement.good:
-      case HitJudgement.ok:
-      case HitJudgement.graze:
-      case HitJudgement.rim:
-      case HitJudgement.edge:
-        if (j == HitJudgement.perfect) {
-          _hitsPerfect++;
-        } else if (j == HitJudgement.good) {
-          _hitsGood++;
-        } else if (j == HitJudgement.ok) {
-          _hitsOk++;
-        } else if (j == HitJudgement.graze) {
-          _hitsGraze++;
-        } else if (j == HitJudgement.rim) {
-          _hitsRim++;
-        } else if (j == HitJudgement.edge) {
-          _hitsEdge++;
-        }
-        final int comboCap = difficultyForScore(_score).comboMaxPow;
-        _comboPow = (_comboPow + 1).clamp(0, comboCap);
-        _bestComboPow = math.max(_bestComboPow, _comboPow);
-        final int add = (j.basePoints * _comboMultiplier * _bonusScoreMul).round();
+        _hitsGood++;
+        _perfectChain = 0;
+        final int add = (j.basePoints * _bonusScoreMul).round();
         emitFloatingPoints(_floatingPoints, value: add, j: j, seed: seed);
         _hitPulse.forward(from: 0);
-        _showBigText(
-          j.locLabel(l10n),
-          scale: switch (j) {
-            HitJudgement.graze => 0.94,
-            HitJudgement.rim => 0.91,
-            HitJudgement.edge => 0.88,
-            HitJudgement.ok => 1.02,
-            _ => 1.08,
-          },
-          glow: j == HitJudgement.perfect,
-        );
+        _showBigText(j.locLabel(l10n), scale: 1.06, glow: false);
+        await Future<void>.delayed(const Duration(milliseconds: 110));
+        if (!mounted) return;
+        setState(() => _score += add);
+        _maybeRollBonus();
+        _restartCycle(scoreAfterTap: _score);
+        return;
+      case HitJudgement.ok:
+        _hitsOk++;
+        _perfectChain = 0;
+        final int add = (j.basePoints * _bonusScoreMul).round();
+        emitFloatingPoints(_floatingPoints, value: add, j: j, seed: seed);
+        _hitPulse.forward(from: 0);
+        _showBigText(j.locLabel(l10n), scale: 1.02, glow: false);
         await Future<void>.delayed(const Duration(milliseconds: 110));
         if (!mounted) return;
         setState(() => _score += add);
@@ -278,7 +252,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _restartCycle(scoreAfterTap: _score);
         return;
       case HitJudgement.miss:
-        _comboPow = 0;
+        _perfectChain = 0;
         _showBigText(j.locLabel(l10n), scale: 1.0, glow: false);
         _missFlash.forward(from: 0);
         await Future<void>.delayed(const Duration(milliseconds: 180));
@@ -335,7 +309,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   Future<void> _exitToResults() async {
     _shrink.stop();
-    final int bestCombo = 1 << _bestComboPow;
+    final int bestCombo = _maxChainMultiplier;
 
     final (int bestScore, int bestComboStored, bool newBest) =
         await LocalStats.updateBestIfNeeded(score: _score, bestCombo: bestCombo);
@@ -359,13 +333,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final int rankEstimate = (120000 / math.max(1, _score + 12)).round().clamp(1, 99999);
 
     final JudgementBreakdown breakdown = JudgementBreakdown(
-      ultra: _hitsUltra,
       perfect: _hitsPerfect,
       good: _hitsGood,
       ok: _hitsOk,
-      graze: _hitsGraze,
-      rim: _hitsRim,
-      edge: _hitsEdge,
     );
 
     final RunResult result = RunResult(
@@ -554,7 +524,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     Row(
                       children: <Widget>[
                         Text(
-                          'x$_comboMultiplier',
+                          'x$_nextPerfectMultiplier',
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 1.6,

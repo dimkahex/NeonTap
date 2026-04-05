@@ -108,40 +108,20 @@ class _FloatingPointsOverlayState extends State<FloatingPointsOverlay> with Sing
             const TextStyle(fontSize: 26, fontWeight: FontWeight.w900);
 
     return switch (j) {
-      HitJudgement.ultra => base.copyWith(
-          fontSize: 34,
-          color: const Color(0xFFFFE082),
-          shadows: const <Shadow>[Shadow(color: Color(0xAAFFE082), blurRadius: 24)],
-        ),
       HitJudgement.perfect => base.copyWith(
-          fontSize: 30,
-          color: const Color(0xFF2CFF7B),
-          shadows: const <Shadow>[Shadow(color: Color(0x992CFF7B), blurRadius: 18)],
+          fontSize: 32,
+          color: const Color(0xFFFFE082),
+          shadows: const <Shadow>[Shadow(color: Color(0xAAFFE082), blurRadius: 22)],
         ),
       HitJudgement.good => base.copyWith(
           fontSize: 26,
-          color: Colors.orangeAccent,
-          shadows: const <Shadow>[Shadow(color: Color(0x88FFB74D), blurRadius: 14)],
+          color: const Color(0xFF2CFF7B),
+          shadows: const <Shadow>[Shadow(color: Color(0x992CFF7B), blurRadius: 14)],
         ),
       HitJudgement.ok => base.copyWith(
           fontSize: 22,
           color: Colors.white70,
           shadows: const <Shadow>[Shadow(color: Color(0x8835E6FF), blurRadius: 10)],
-        ),
-      HitJudgement.graze => base.copyWith(
-          fontSize: 18,
-          color: const Color(0xFF78909C),
-          shadows: const <Shadow>[Shadow(color: Color(0x66445566), blurRadius: 8)],
-        ),
-      HitJudgement.rim => base.copyWith(
-          fontSize: 17,
-          color: const Color(0xFF6D8A96),
-          shadows: const <Shadow>[Shadow(color: Color(0x55334455), blurRadius: 6)],
-        ),
-      HitJudgement.edge => base.copyWith(
-          fontSize: 16,
-          color: const Color(0xFF5C6B73),
-          shadows: const <Shadow>[Shadow(color: Color(0x44334444), blurRadius: 6)],
         ),
       HitJudgement.miss => base.copyWith(
           fontSize: 24,

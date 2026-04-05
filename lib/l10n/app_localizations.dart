@@ -179,7 +179,7 @@ abstract class AppLocalizations {
   /// No description provided for @gameAimHint.
   ///
   /// In en, this message translates to:
-  /// **'Timing: closer to center = more points (up to +10). Wide band miss: three \"bracket\" zones (near/mid/far from the ring), 1 pt each.'**
+  /// **'AIM: hit the shrinking ring. In the band = PERFECT / GOOD / OK by timing. Outside the band but still near the ring = OK. PERFECT chains: x1 → x2 → x4 → x8 → x16; GOOD or OK resets the chain.'**
   String get gameAimHint;
 
   /// No description provided for @gameWarmupHint.
@@ -206,46 +206,22 @@ abstract class AppLocalizations {
   /// **'RANK RISING!'**
   String get gameRankRising;
 
-  /// No description provided for @judgementGraze.
-  ///
-  /// In en, this message translates to:
-  /// **'BRACKET (near) +1'**
-  String get judgementGraze;
-
-  /// No description provided for @judgementRim.
-  ///
-  /// In en, this message translates to:
-  /// **'BRACKET (mid) +1'**
-  String get judgementRim;
-
-  /// No description provided for @judgementEdge.
-  ///
-  /// In en, this message translates to:
-  /// **'BRACKET (far) +1'**
-  String get judgementEdge;
-
   /// No description provided for @judgementOk.
   ///
   /// In en, this message translates to:
-  /// **'OK +2'**
+  /// **'OK'**
   String get judgementOk;
-
-  /// No description provided for @judgementUltra.
-  ///
-  /// In en, this message translates to:
-  /// **'ULTRA +10'**
-  String get judgementUltra;
 
   /// No description provided for @judgementPerfect.
   ///
   /// In en, this message translates to:
-  /// **'PERFECT +5'**
+  /// **'PERFECT'**
   String get judgementPerfect;
 
   /// No description provided for @judgementGood.
   ///
   /// In en, this message translates to:
-  /// **'GOOD +2'**
+  /// **'GOOD'**
   String get judgementGood;
 
   /// No description provided for @judgementMiss.
@@ -299,9 +275,8 @@ abstract class AppLocalizations {
   /// No description provided for @resultsBreakdown.
   ///
   /// In en, this message translates to:
-  /// **'Timing: ultra {u} · perfect {p} · good {g} · ok {ok}. Brackets (+1): near {gz} · mid {rim} · far {edge}'**
-  String resultsBreakdown(
-      int u, int p, int g, int ok, int gz, int rim, int edge);
+  /// **'PERFECT {perfect} · GOOD {good} · OK {ok}'**
+  String resultsBreakdown(int perfect, int good, int ok);
 
   /// No description provided for @resultsBestCombo.
   ///
