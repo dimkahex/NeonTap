@@ -158,6 +158,24 @@ abstract class AppLocalizations {
   /// **'Stats • Achievements • Share card'**
   String get menuProfileSubtitle;
 
+  /// No description provided for @menuHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get menuHelp;
+
+  /// No description provided for @helpDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How to play'**
+  String get helpDialogTitle;
+
+  /// No description provided for @helpDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'NEON PULSE is a one-tap timing game. A neon ring shrinks toward the center — tap when your timing matches the colored zones.\n\n• Too early (outside the green band) or too late (center black hole) = MISS — the run ends.\n• Green OK +2, orange GOOD +4, yellow COOL +6, red PERFECT +8. PERFECT chain multipliers (×2 → ×16) grow only on consecutive PERFECTs; any other zone resets the chain.\n• At higher scores the field can drift — keep your eyes on the ring.\n\nClose this dialog and tap to play.'**
+  String get helpDialogBody;
+
   /// No description provided for @menuFooterRankings.
   ///
   /// In en, this message translates to:
@@ -175,18 +193,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'End run'**
   String get gameEndRunTooltip;
-
-  /// No description provided for @gameAimHint.
-  ///
-  /// In en, this message translates to:
-  /// **'AIM: shrinking ring — zones from center: center hole = MISS, red PERFECT (+8, chain ×2→×4→×8→×16), yellow COOL (+6), orange GOOD (+4), green OK (+2); outside green = MISS. Grazing off-band = OK. Only consecutive PERFECTs raise the chain.'**
-  String get gameAimHint;
-
-  /// No description provided for @gameWarmupHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Warm-up — ring aim starts soon'**
-  String get gameWarmupHint;
 
   /// No description provided for @gameScoreX2.
   ///

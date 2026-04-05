@@ -7,6 +7,7 @@ import '../services/sfx.dart';
 import '../app_version.dart';
 import '../ui/neon_background.dart';
 import '../ui/neon_button.dart';
+import '../ui/game_help_dialog.dart';
 import 'leaderboard_screen.dart';
 import 'game_screen.dart';
 import 'profile_screen.dart';
@@ -54,7 +55,23 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                       letterSpacing: 1.4,
                     ),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => showGameHelpDialog(context),
+                  icon: const Icon(Icons.help_outline, size: 22, color: Color(0xFF35E6FF)),
+                  label: Text(
+                    l10n.menuHelp,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: const Color(0xFF35E6FF),
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                        ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
               NeonButton(
                 label: l10n.menuPlay,
                 subtitle: l10n.menuPlaySubtitle,

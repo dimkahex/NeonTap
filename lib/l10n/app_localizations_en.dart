@@ -40,6 +40,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuProfileSubtitle => 'Stats • Achievements • Share card';
 
   @override
+  String get menuHelp => 'Help';
+
+  @override
+  String get helpDialogTitle => 'How to play';
+
+  @override
+  String get helpDialogBody =>
+      'NEON PULSE is a one-tap timing game. A neon ring shrinks toward the center — tap when your timing matches the colored zones.\n\n• Too early (outside the green band) or too late (center black hole) = MISS — the run ends.\n• Green OK +2, orange GOOD +4, yellow COOL +6, red PERFECT +8. PERFECT chain multipliers (×2 → ×16) grow only on consecutive PERFECTs; any other zone resets the chain.\n• At higher scores the field can drift — keep your eyes on the ring.\n\nClose this dialog and tap to play.';
+
+  @override
   String get menuFooterRankings =>
       'Rankings: local now • cloud in the final build';
 
@@ -48,13 +58,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gameEndRunTooltip => 'End run';
-
-  @override
-  String get gameAimHint =>
-      'AIM: shrinking ring — zones from center: center hole = MISS, red PERFECT (+8, chain ×2→×4→×8→×16), yellow COOL (+6), orange GOOD (+4), green OK (+2); outside green = MISS. Grazing off-band = OK. Only consecutive PERFECTs raise the chain.';
-
-  @override
-  String get gameWarmupHint => 'Warm-up — ring aim starts soon';
 
   @override
   String get gameScoreX2 => 'SCORE x2';

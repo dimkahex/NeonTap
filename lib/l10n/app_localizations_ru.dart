@@ -40,6 +40,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get menuProfileSubtitle => 'Статистика • Достижения • Карточка';
 
   @override
+  String get menuHelp => 'Помощь';
+
+  @override
+  String get helpDialogTitle => 'Как играть';
+
+  @override
+  String get helpDialogBody =>
+      'NEON PULSE — игра на тайминг в одно касание. Неоновое кольцо сужается к центру — нажимайте, когда по радиусу кольца вы попадаете в нужную цветную зону.\n\n• Слишком рано (за зелёной зоной) или слишком поздно (чёрная дыра в центре) = MISS — забег заканчивается.\n• Зелёный OK +2, оранжевый GOOD +4, жёлтый COOL +6, красный PERFECT +8. Множитель цепочки (×2 → ×16) растёт только от подряд идущих PERFECT; любая другая зона сбрасывает цепочку.\n• На высоком счёте поле может смещаться — держите внимание на кольце.\n\nЗакройте окно и касайтесь экрана, чтобы играть.';
+
+  @override
   String get menuFooterRankings =>
       'Рейтинг: сейчас локально • облако — в финале';
 
@@ -48,13 +58,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gameEndRunTooltip => 'Закончить забег';
-
-  @override
-  String get gameAimHint =>
-      'Цель — сужающееся кольцо. От центра: дыра = MISS, красный PERFECT (+8, цепочка ×2→×4→×8→×16), жёлтый COOL (+6), оранжевый GOOD (+4), зелёный OK (+2); за зелёным — MISS. Скользящее касание вне полосы — OK. Цепочку поднимают только подряд PERFECT.';
-
-  @override
-  String get gameWarmupHint => 'Разминка — скоро появится прицел кольца';
 
   @override
   String get gameScoreX2 => 'СЧЁТ ×2';

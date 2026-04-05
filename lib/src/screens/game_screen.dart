@@ -25,6 +25,7 @@ import '../ui/floating_points_overlay.dart';
 import '../ui/particles_overlay.dart';
 import '../ui/ring_guide_painter.dart';
 import '../ui/spiral_overlay.dart';
+import '../ui/game_help_dialog.dart';
 import 'results_screen.dart';
 
 class GameScreen extends StatefulWidget {
@@ -111,6 +112,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _drift = AnimationController(vsync: this, duration: const Duration(milliseconds: 5200))
       ..addListener(_updateDrift)
       ..repeat();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showGameHelpDialog(context);
+    });
   }
 
   @override
@@ -572,44 +577,30 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 top: 14,
                 left: 56,
                 right: 16,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Text(
+                      _score.toString(),
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.4,
+                          ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: <Widget>[
                         Text(
-                          _score.toString(),
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.4,
+                          kAppVersion,
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: Colors.white38,
+                                letterSpacing: 0.8,
                               ),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: <Widget>[
-                            Text(
-                              kAppVersion,
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: Colors.white38,
-                                    letterSpacing: 0.8,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            _RankRisingBadge(score: _score),
-                          ],
-                        ),
+                        const SizedBox(height: 4),
+                        _RankRisingBadge(score: _score),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      ringAim ? l10n.gameAimHint : l10n.gameWarmupHint,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: ringAim ? const Color(0xFF35E6FF) : Colors.white54,
-                            letterSpacing: 0.6,
-                            fontWeight: FontWeight.w600,
-                          ),
                     ),
                   ],
                 ),
