@@ -54,10 +54,10 @@ class NeonCirclePainter extends CustomPainter {
       ..strokeWidth = 6
       ..color = core.withOpacity(0.95);
 
-    // Zone rings (static thresholds)
-    _ring(canvas, c, 70, Colors.orangeAccent.withOpacity(0.35));
-    _ring(canvas, c, 30, const Color(0xFF2CFF7B).withOpacity(0.45));
-    _ring(canvas, c, 15, const Color(0xFFFFE082).withOpacity(0.55), width: 2.5);
+    // Zone rings — same radii as GameScreen._judge (ULTRA / PERFECT / GOOD / OK)
+    _ring(canvas, c, 72, Colors.orangeAccent.withOpacity(0.35));
+    _ring(canvas, c, 48, const Color(0xFF2CFF7B).withOpacity(0.45));
+    _ring(canvas, c, 28, const Color(0xFFFFE082).withOpacity(0.55), width: 2.5);
     _ring(canvas, c, 110, Colors.white.withOpacity(0.10), width: 1.5); // OK zone (wide / low points)
 
     canvas.drawCircle(c, r * 1.02 * distract, outerGlow);

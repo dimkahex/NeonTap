@@ -129,10 +129,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _shrink.forward(from: 0);
   }
 
+  /// Timing tiers by ring radius (px). ULTRA was r<15 — too narrow vs shrink speed; widened for fair play.
   HitJudgement _judge(double r) {
-    if (r < 15) return HitJudgement.ultra;
-    if (r < 30) return HitJudgement.perfect;
-    if (r < 70) return HitJudgement.good;
+    if (r < 28) return HitJudgement.ultra;
+    if (r < 48) return HitJudgement.perfect;
+    if (r < 72) return HitJudgement.good;
     if (r < 110) return HitJudgement.ok;
     return HitJudgement.miss;
   }
