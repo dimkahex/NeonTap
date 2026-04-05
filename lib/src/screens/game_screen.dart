@@ -168,32 +168,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
       final bool ringAim = _score >= _ringAimMinScore;
       if (ringAim) {
-        final double delta = (tapDist - r).abs();
-        // «Глаз» спирали — отдельное правило (ранний тап в центр при большом r).
+        // «Глаз» спирали — единственное доп. правило; зона/очки только от тайминга r.
         if (r > TimingThresholds.rCoolOuter && tapDist < _voidEyePx) {
           await _handleJudgement(HitJudgement.miss);
           return;
         }
-        // Тайминг — единственный источник MISS по зонам (как до 35 очков).
-        // Раньше delta > band давало мгновенный MISS даже при PERFECT по r — из‑за этого
-        // «красная зона» считалась промахом, если палец чуть в стороне от линии кольца.
-        final HitJudgement timing = _judge(r);
-        if (timing == HitJudgement.miss) {
-          await _handleJudgement(HitJudgement.miss);
-          return;
-        }
-        // В пределах основной полосы кольца — полный суд (PERFECT / COOL / …).
-        if (delta <= _ringHalfWidthPx) {
-          await _handleJudgement(timing);
-          return;
-        }
-        // Скольжение по внешним линиям гайда — только ослабление до OK.
-        if (delta <= _bandEdgeOuterPx) {
-          await _handleJudgement(HitJudgement.ok);
-          return;
-        }
-        await _handleJudgement(HitJudgement.ok);
-        return;
       }
 
       await _handleJudgement(_judge(r));

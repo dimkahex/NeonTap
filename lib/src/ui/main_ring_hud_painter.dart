@@ -22,8 +22,9 @@ class MainRingHudPainter extends CustomPainter {
     if (r < 1.5) return;
 
     final double progress = 1.0 - (r / maxRadius);
+    // Не уходим в «томатный» красный у центра — иначе два красных кольца (статичная зона PERFECT + HUD).
     const Color start = Color(0xFF35E6FF);
-    const Color end = Color(0xFFFF3355);
+    const Color end = Color(0xFFE040FB);
     final Color core = Color.lerp(start, end, progress) ?? start;
 
     final Paint signature = Paint()

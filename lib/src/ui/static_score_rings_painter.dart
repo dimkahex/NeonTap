@@ -148,11 +148,6 @@ class StaticScoreRingsPainter extends CustomPainter {
       ..strokeWidth = 2
       ..color = const Color(0xFF6A00FF).withValues(alpha: 0.65);
     canvas.drawCircle(c, TimingThresholds.rCenterMiss, rim);
-    final Paint rimInner = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.9
-      ..color = const Color(0xFF00E5FF).withValues(alpha: 0.35);
-    canvas.drawCircle(c, TimingThresholds.rCenterMiss * 0.92, rimInner);
   }
 
   @override
