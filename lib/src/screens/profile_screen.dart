@@ -42,23 +42,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _load() async {
-    final String n = await PlayerPrefs.getDisplayName();
-    _name.text = n;
-    final String code = await FriendsService.ensureFriendCode();
-    final List<String> uids = await FriendsService.listFriendUids();
-    final List<_FriendRow> rows = <_FriendRow>[];
-    for (final String uid in uids) {
-      final String name = await FriendsService.displayNameForUid(uid);
-      rows.add(_FriendRow(uid: uid, displayName: name));
+    try {
+      final String n = await PlayerPrefs.getDisplayName();
+      _name.text = n;
+      final String code = await FriendsService.ensureFriendCode();
+      final List<String> uids = await FriendsService.listFriendUids();
+      final List<_FriendRow> rows = <_FriendRow>[];
+      for (final String uid in uids) {
+        final String name = await FriendsService.displayNameForUid(uid);
+        rows.add(_FriendRow(uid: uid, displayName: name));
+      }
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _friendCode = code.trim();
+        _friends = rows;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      // Fall back to local-only UI; avoid infinite spinner.
+      setState(() {
+        _friendCode = _friendCode.isEmpty ? '—' : _friendCode;
+        _friends = <_FriendRow>[];
+        _loading = false;
+      });
     }
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _friendCode = code.trim();
-      _friends = rows;
-      _loading = false;
-    });
   }
 
   Future<void> _saveName() async {

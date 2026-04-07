@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 
 import '../config/online_config.dart';
 import '../models/leaderboard_entry.dart';
@@ -12,6 +13,11 @@ import 'share_code_local.dart';
 /// Friend codes + `users/{uid}/friends/{friendUid}`.
 class FriendsService {
   FriendsService._();
+
+  static const Duration _kOpTimeout = Duration(seconds: 6);
+
+  /// Last Firebase / RTDB issue related to friends/profile features.
+  static final ValueNotifier<String?> status = ValueNotifier<String?>(null);
 
   /// Placeholder [LeaderboardEntry.displayName] for the current user (localize in UI).
   static const String kLeaderboardYouMarker = '__L10N_YOU__';
@@ -29,6 +35,7 @@ class FriendsService {
       if (FirebaseAuth.instance.currentUser == null) {
         await FirebaseAuth.instance.signInAnonymously();
       }
+      status.value = null;
     } catch (_) {}
   }
 
@@ -52,13 +59,13 @@ class FriendsService {
     }
 
     try {
-      await _ensureAuth();
+      await _ensureAuth().timeout(_kOpTimeout);
       if (!_ready) {
         return local;
       }
       final String uid = _myUid!;
       final DatabaseReference mine = FirebaseDatabase.instance.ref('users/$uid/friendCode');
-      final DataSnapshot existing = await mine.get();
+      final DataSnapshot existing = await mine.get().timeout(_kOpTimeout);
       if (existing.exists && existing.value is String) {
         final String s = (existing.value! as String).trim().toUpperCase();
         if (s.length == 6) {
@@ -69,10 +76,10 @@ class FriendsService {
 
       // Prefer registering the same code as on device (stable across reinstall if prefs kept).
       final DatabaseReference localRef = FirebaseDatabase.instance.ref('friendCodes/$local');
-      final DataSnapshot taken = await localRef.get();
+      final DataSnapshot taken = await localRef.get().timeout(_kOpTimeout);
       if (!taken.exists) {
-        await localRef.set(<String, String>{'uid': uid});
-        await mine.set(local);
+        await localRef.set(<String, String>{'uid': uid}).timeout(_kOpTimeout);
+        await mine.set(local).timeout(_kOpTimeout);
         await ShareCodeLocal.save(local);
         return local;
       }
@@ -80,7 +87,7 @@ class FriendsService {
         final Map<Object?, Object?> m = taken.value! as Map<Object?, Object?>;
         final String? owner = m['uid'] as String?;
         if (owner == uid) {
-          await mine.set(local);
+          await mine.set(local).timeout(_kOpTimeout);
           await ShareCodeLocal.save(local);
           return local;
         }
@@ -93,17 +100,18 @@ class FriendsService {
           (_) => _chars[rnd.nextInt(_chars.length)],
         ).join();
         final DatabaseReference codeRef = FirebaseDatabase.instance.ref('friendCodes/$code');
-        final DataSnapshot snap = await codeRef.get();
+        final DataSnapshot snap = await codeRef.get().timeout(_kOpTimeout);
         if (snap.exists) {
           continue;
         }
-        await codeRef.set(<String, String>{'uid': uid});
-        await mine.set(code);
+        await codeRef.set(<String, String>{'uid': uid}).timeout(_kOpTimeout);
+        await mine.set(code).timeout(_kOpTimeout);
         await ShareCodeLocal.save(code);
         return code;
       }
       return local;
-    } catch (_) {
+    } catch (e) {
+      status.value = 'FriendsService ensureFriendCode failed: $e';
       return local;
     }
   }
@@ -113,7 +121,7 @@ class FriendsService {
     if (!kFirebaseOnlineFeaturesEnabled) {
       return FriendAddError.firebaseDisabled;
     }
-    await _ensureAuth();
+    await _ensureAuth().timeout(_kOpTimeout);
     if (!_ready) {
       return FriendAddError.notReady;
     }
@@ -125,7 +133,7 @@ class FriendsService {
     if (code.length != 6) {
       return FriendAddError.invalidLength;
     }
-    final DataSnapshot snap = await FirebaseDatabase.instance.ref('friendCodes/$code').get();
+    final DataSnapshot snap = await FirebaseDatabase.instance.ref('friendCodes/$code').get().timeout(_kOpTimeout);
     if (!snap.exists || snap.value is! Map) {
       return FriendAddError.notFound;
     }
@@ -137,7 +145,7 @@ class FriendsService {
     if (friendUid == myUid) {
       return FriendAddError.ownCode;
     }
-    await FirebaseDatabase.instance.ref('users/$myUid/friends/$friendUid').set(true);
+    await FirebaseDatabase.instance.ref('users/$myUid/friends/$friendUid').set(true).timeout(_kOpTimeout);
     return null;
   }
 
@@ -165,7 +173,7 @@ class FriendsService {
     if (!kFirebaseOnlineFeaturesEnabled) {
       return <String>[];
     }
-    await _ensureAuth();
+    await _ensureAuth().timeout(_kOpTimeout);
     if (!_ready) {
       return <String>[];
     }
@@ -173,7 +181,8 @@ class FriendsService {
     if (myUid == null) {
       return <String>[];
     }
-    final DataSnapshot friendsSnap = await FirebaseDatabase.instance.ref('users/$myUid/friends').get();
+    final DataSnapshot friendsSnap =
+        await FirebaseDatabase.instance.ref('users/$myUid/friends').get().timeout(_kOpTimeout);
     final List<String> out = <String>[];
     if (friendsSnap.value is Map) {
       final Map<Object?, Object?> fm = friendsSnap.value! as Map<Object?, Object?>;
@@ -190,12 +199,12 @@ class FriendsService {
     if (!kFirebaseOnlineFeaturesEnabled) {
       return;
     }
-    await _ensureAuth();
+    await _ensureAuth().timeout(_kOpTimeout);
     final String? myUid = _myUid;
     if (!_ready || myUid == null) {
       return;
     }
-    await FirebaseDatabase.instance.ref('users/$myUid/friends/$friendUid').remove();
+    await FirebaseDatabase.instance.ref('users/$myUid/friends/$friendUid').remove().timeout(_kOpTimeout);
   }
 
   /// Имя из `leaderboard/global` для экрана профиля.
@@ -203,11 +212,12 @@ class FriendsService {
     if (!kFirebaseOnlineFeaturesEnabled) {
       return uid;
     }
-    await _ensureAuth();
+    await _ensureAuth().timeout(_kOpTimeout);
     if (!_ready) {
       return uid;
     }
-    final DataSnapshot snap = await FirebaseDatabase.instance.ref('leaderboard/global/$uid').get();
+    final DataSnapshot snap =
+        await FirebaseDatabase.instance.ref('leaderboard/global/$uid').get().timeout(_kOpTimeout);
     if (!snap.exists || snap.value is! Map) {
       return uid;
     }
@@ -224,7 +234,7 @@ class FriendsService {
     if (!kFirebaseOnlineFeaturesEnabled) {
       return LeaderboardService.loadLocalGlobalLeaderboard();
     }
-    await _ensureAuth();
+    await _ensureAuth().timeout(_kOpTimeout);
     if (!_ready) {
       return <LeaderboardEntry>[];
     }
@@ -233,7 +243,8 @@ class FriendsService {
       return <LeaderboardEntry>[];
     }
     final Set<String> uids = <String>{myUid};
-    final DataSnapshot friendsSnap = await FirebaseDatabase.instance.ref('users/$myUid/friends').get();
+    final DataSnapshot friendsSnap =
+        await FirebaseDatabase.instance.ref('users/$myUid/friends').get().timeout(_kOpTimeout);
     if (friendsSnap.value is Map) {
       final Map<Object?, Object?> fm = friendsSnap.value! as Map<Object?, Object?>;
       fm.forEach((Object? k, Object? v) {
@@ -245,7 +256,8 @@ class FriendsService {
 
     final List<LeaderboardEntry> rows = <LeaderboardEntry>[];
     for (final String id in uids) {
-      final DataSnapshot row = await FirebaseDatabase.instance.ref('leaderboard/global/$id').get();
+      final DataSnapshot row =
+          await FirebaseDatabase.instance.ref('leaderboard/global/$id').get().timeout(_kOpTimeout);
       if (row.exists && row.value is Map) {
         final Map<Object?, Object?> vm = Map<Object?, Object?>.from(row.value! as Map);
         rows.add(
