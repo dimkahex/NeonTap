@@ -32,10 +32,10 @@ class LeaderboardService {
         await FirebaseAuth.instance.signInAnonymously();
       }
       status.value = null;
-    } catch (_) {
+    } catch (e) {
       // Offline or missing config.
       status.value =
-          'Firebase init/auth failed. Check google-services.json, enable Anonymous Auth, and publish RTDB rules + indexOn(score).';
+          'Firebase init/auth failed: $e\nCheck internet, enable Anonymous Auth, publish RTDB rules, and ensure /leaderboard/global is readable with .indexOn(\"score\").';
     }
   }
 
@@ -112,6 +112,18 @@ class LeaderboardService {
       yield await loadLocalGlobalLeaderboard();
       return;
     }
+
+    // Always emit something quickly so UI never spins forever.
+    yield await loadLocalGlobalLeaderboard();
+
+    // Try to connect/auth with a timeout (otherwise StreamBuilder can stay `waiting` indefinitely).
+    try {
+      await _ensureAuth().timeout(const Duration(seconds: 6));
+    } catch (e) {
+      status.value = 'Firebase init/auth timed out: $e';
+      return;
+    }
+
     await _ensureAuth();
     final String? myUid = FirebaseAuth.instance.currentUser?.uid;
     if (Firebase.apps.isEmpty || myUid == null) {
@@ -124,27 +136,34 @@ class LeaderboardService {
         .orderByChild('score')
         .limitToLast(limit);
 
-    await for (final DatabaseEvent event in q.onValue) {
-      final Object? raw = event.snapshot.value;
-      if (raw is! Map) {
-        yield <LeaderboardEntry>[];
-        continue;
-      }
-      final List<LeaderboardEntry> rows = <LeaderboardEntry>[];
-      raw.forEach((Object? k, Object? v) {
-        if (k == null || v is! Map) {
-          return;
+    try {
+      await for (final DatabaseEvent event in q.onValue) {
+        final Object? raw = event.snapshot.value;
+        if (raw is! Map) {
+          yield <LeaderboardEntry>[];
+          continue;
         }
-        final String uid = k.toString();
-        final Map<Object?, Object?> vm = Map<Object?, Object?>.from(v);
-        rows.add(
-          LeaderboardEntry.fromSnapshotMap(uid, vm).copyWith(
-            isMe: uid == myUid,
-          ),
-        );
-      });
-      rows.sort((LeaderboardEntry a, LeaderboardEntry b) => b.score.compareTo(a.score));
-      yield rows;
+        final List<LeaderboardEntry> rows = <LeaderboardEntry>[];
+        raw.forEach((Object? k, Object? v) {
+          if (k == null || v is! Map) {
+            return;
+          }
+          final String uid = k.toString();
+          final Map<Object?, Object?> vm = Map<Object?, Object?>.from(v);
+          rows.add(
+            LeaderboardEntry.fromSnapshotMap(uid, vm).copyWith(
+              isMe: uid == myUid,
+            ),
+          );
+        });
+        rows.sort((LeaderboardEntry a, LeaderboardEntry b) => b.score.compareTo(a.score));
+        status.value = null;
+        yield rows;
+      }
+    } catch (e) {
+      status.value = 'RTDB subscription failed: $e';
+      // Keep UI usable (local best already yielded).
+      return;
     }
   }
 
