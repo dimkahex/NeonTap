@@ -362,6 +362,12 @@ abstract class AppLocalizations {
   /// **'Offline: only your scores on this device. Global board — after Firebase.'**
   String get leaderboardOfflineBanner;
 
+  /// No description provided for @leaderboardOnlineUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Global leaderboard is unavailable right now.\n{error}'**
+  String leaderboardOnlineUnavailable(String error);
+
   /// No description provided for @leaderboardLoadError.
   ///
   /// In en, this message translates to:

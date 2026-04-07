@@ -153,6 +153,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Offline: only your scores on this device. Global board — after Firebase.';
 
   @override
+  String leaderboardOnlineUnavailable(String error) {
+    return 'Global leaderboard is unavailable right now.\n$error';
+  }
+
+  @override
   String get leaderboardLoadError =>
       'Could not load the table.\nCheck Firebase and RTDB rules.';
 

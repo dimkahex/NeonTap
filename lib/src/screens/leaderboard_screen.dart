@@ -100,41 +100,61 @@ class _GlobalTabState extends State<_GlobalTab> {
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     if (kFirebaseOnlineFeaturesEnabled) {
-      return StreamBuilder<List<LeaderboardEntry>>(
-        stream: LeaderboardService.watchGlobalTop(limit: 100),
-        builder: (BuildContext context, AsyncSnapshot<List<LeaderboardEntry>> snap) {
-          if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  l10n.leaderboardLoadError,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
+      return ValueListenableBuilder<String?>(
+        valueListenable: LeaderboardService.status,
+        builder: (BuildContext context, String? status, _) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              if (status != null && status.trim().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                  child: Text(
+                    l10n.leaderboardOnlineUnavailable(status),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+                  ),
+                ),
+              Expanded(
+                child: StreamBuilder<List<LeaderboardEntry>>(
+                  stream: LeaderboardService.watchGlobalTop(limit: 100),
+                  builder: (BuildContext context, AsyncSnapshot<List<LeaderboardEntry>> snap) {
+                    if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snap.hasError) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            l10n.leaderboardLoadError,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
+                          ),
+                        ),
+                      );
+                    }
+                    final List<LeaderboardEntry> rows = snap.data ?? <LeaderboardEntry>[];
+                    if (rows.isEmpty) {
+                      return Center(
+                        child: Text(
+                          l10n.leaderboardEmptyGlobal,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
+                        ),
+                      );
+                    }
+                    return ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+                      itemCount: rows.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0x22FFFFFF)),
+                      itemBuilder: (BuildContext context, int i) {
+                        return _Row(rank: i + 1, entry: rows[i]);
+                      },
+                    );
+                  },
                 ),
               ),
-            );
-          }
-          final List<LeaderboardEntry> rows = snap.data ?? <LeaderboardEntry>[];
-          if (rows.isEmpty) {
-            return Center(
-              child: Text(
-                l10n.leaderboardEmptyGlobal,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
-              ),
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-            itemCount: rows.length,
-            separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0x22FFFFFF)),
-            itemBuilder: (BuildContext context, int i) {
-              return _Row(rank: i + 1, entry: rows[i]);
-            },
+            ],
           );
         },
       );

@@ -153,6 +153,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Офлайн: только ваши результаты на устройстве. Общий рейтинг — после Firebase.';
 
   @override
+  String leaderboardOnlineUnavailable(String error) {
+    return 'Глобальный рейтинг сейчас недоступен.\n$error';
+  }
+
+  @override
   String get leaderboardLoadError =>
       'Не удалось загрузить таблицу.\nПроверьте Firebase и правила RTDB.';
 

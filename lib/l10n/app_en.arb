@@ -68,6 +68,12 @@
   "leaderboardGlobalTab": "GLOBAL",
   "leaderboardFriendsTab": "FRIENDS",
   "leaderboardOfflineBanner": "Offline: only your scores on this device. Global board — after Firebase.",
+  "leaderboardOnlineUnavailable": "Global leaderboard is unavailable right now.\n{error}",
+  "@leaderboardOnlineUnavailable": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
   "leaderboardLoadError": "Could not load the table.\nCheck Firebase and RTDB rules.",
   "leaderboardEmptyGlobal": "No entries yet — play and improve your best score.",
   "leaderboardEmptyLocal": "Play a run — your best score will appear here.",

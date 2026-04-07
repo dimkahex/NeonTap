@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 
 import '../config/online_config.dart';
 import '../models/leaderboard_entry.dart';
@@ -10,6 +11,9 @@ import 'player_prefs.dart';
 /// Global leaderboard under `leaderboard/global/{uid}`.
 class LeaderboardService {
   LeaderboardService._();
+
+  /// Last Firebase / RTDB issue (null when healthy).
+  static final ValueNotifier<String?> status = ValueNotifier<String?>(null);
 
   static bool get _firebaseReady {
     try {
@@ -27,8 +31,11 @@ class LeaderboardService {
       if (FirebaseAuth.instance.currentUser == null) {
         await FirebaseAuth.instance.signInAnonymously();
       }
+      status.value = null;
     } catch (_) {
       // Offline or missing config.
+      status.value =
+          'Firebase init/auth failed. Check google-services.json, enable Anonymous Auth, and publish RTDB rules + indexOn(score).';
     }
   }
 
@@ -70,12 +77,17 @@ class LeaderboardService {
     if (bestScore <= prev) {
       return;
     }
-    await ref.set(<String, Object?>{
-      'displayName': displayName,
-      'score': bestScore,
-      'bestCombo': bestCombo,
-      'updatedAt': ServerValue.timestamp,
-    });
+    try {
+      await ref.set(<String, Object?>{
+        'displayName': displayName,
+        'score': bestScore,
+        'bestCombo': bestCombo,
+        'updatedAt': ServerValue.timestamp,
+      });
+      status.value = null;
+    } catch (e) {
+      status.value = 'RTDB write failed: $e';
+    }
   }
 
   static int _readScore(DataSnapshot snap) {
@@ -103,7 +115,8 @@ class LeaderboardService {
     await _ensureAuth();
     final String? myUid = FirebaseAuth.instance.currentUser?.uid;
     if (Firebase.apps.isEmpty || myUid == null) {
-      yield <LeaderboardEntry>[];
+      // Can't connect/auth — show local best so the screen isn't empty.
+      yield await loadLocalGlobalLeaderboard();
       return;
     }
     final Query q = FirebaseDatabase.instance

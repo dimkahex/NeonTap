@@ -52,6 +52,12 @@
   "leaderboardGlobalTab": "ГЛОБАЛЬНЫЙ",
   "leaderboardFriendsTab": "ДРУЗЬЯ",
   "leaderboardOfflineBanner": "Офлайн: только ваши результаты на устройстве. Общий рейтинг — после Firebase.",
+  "leaderboardOnlineUnavailable": "Глобальный рейтинг сейчас недоступен.\n{error}",
+  "@leaderboardOnlineUnavailable": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
   "leaderboardLoadError": "Не удалось загрузить таблицу.\nПроверьте Firebase и правила RTDB.",
   "leaderboardEmptyGlobal": "Пока нет записей — сыграйте и улучшите лучший счёт.",
   "leaderboardEmptyLocal": "Сыграйте партию — здесь появится ваш лучший счёт.",
