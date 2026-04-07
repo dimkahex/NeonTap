@@ -42,12 +42,12 @@ class StaticScoreRingsPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14)
-      ..color = glow.withValues(alpha: 0.45);
+      ..color = glow.withValues(alpha: 0.52);
     final Paint mid = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5)
-      ..color = core.withValues(alpha: 0.55);
+      ..color = core.withValues(alpha: 0.62);
     final Paint line = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.25
@@ -84,23 +84,23 @@ class StaticScoreRingsPainter extends CustomPainter {
       c,
       TimingThresholds.rOkOuter,
       TimingThresholds.rGoodOuter,
-      const Color(0xFF00FFC6).withValues(alpha: 0.18),
+      const Color(0xFF00FFC6).withValues(alpha: 0.22),
     );
 
-    // GOOD — неоновый магента / фуксия.
+    // GOOD — неоновый синий (чтобы визуально отличалось от PERFECT на большом счёте).
     _fillAnnulus(
       canvas,
       c,
       TimingThresholds.rGoodOuter,
       TimingThresholds.rCoolOuter,
-      const Color(0xFFFF00AA).withValues(alpha: 0.2),
+      const Color(0xFF2979FF).withValues(alpha: 0.22),
     );
     _cyberEdge(
       canvas,
       c,
       TimingThresholds.rGoodOuter,
-      const Color(0xFFFF2BD6),
-      const Color(0xFFFF00AA),
+      const Color(0xFF82B1FF),
+      const Color(0xFF2979FF),
     );
 
     // COOL — кислотное золото / янтарь.
@@ -109,7 +109,7 @@ class StaticScoreRingsPainter extends CustomPainter {
       c,
       TimingThresholds.rCoolOuter,
       TimingThresholds.rPerfectOuter,
-      const Color(0xFFFFEA00).withValues(alpha: 0.2),
+      const Color(0xFFFFEA00).withValues(alpha: 0.22),
     );
     _cyberEdge(
       canvas,
@@ -125,7 +125,7 @@ class StaticScoreRingsPainter extends CustomPainter {
       c,
       TimingThresholds.rPerfectOuter,
       TimingThresholds.rCenterMiss,
-      const Color(0xFFFF0080).withValues(alpha: 0.22),
+      const Color(0xFFFF0080).withValues(alpha: 0.25),
     );
     _cyberEdge(
       canvas,

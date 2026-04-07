@@ -93,6 +93,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   /// Плавное наращивание амплитуды дрейфа (без рывка при 70 / 400+ очках).
   double _driftAmpSmooth = 0;
 
+  /// True while a modal help dialog is open — pause shrink and ignore auto-miss.
+  bool _pausedByHelpDialog = false;
+
   late final AnimationController _spectacle;
   final math.Random _spectacleRng = math.Random();
   int? _nextRandomSpectacle;
@@ -114,7 +117,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       ..repeat();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      showGameHelpDialog(context);
+      unawaited(_pauseForHelpDialog());
     });
   }
 
@@ -137,6 +140,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void _onShrinkStatus(AnimationStatus status) {
     if (status != AnimationStatus.completed) return;
     if (_tapJudgementInProgress) return;
+    if (_pausedByHelpDialog) return;
     // Drop spurious "completed" right after _restartCycle (same controller, next frame).
     if (DateTime.now().difference(_shrinkCycleStartedAt) < const Duration(milliseconds: 120)) {
       return;
@@ -159,6 +163,25 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _shrink.duration = Duration(milliseconds: ms);
     _shrinkCycleStartedAt = DateTime.now();
     _shrink.forward(from: 0);
+  }
+
+  Future<void> _pauseForHelpDialog() async {
+    if (_pausedByHelpDialog) return;
+    _pausedByHelpDialog = true;
+    _shrink.stop();
+    try {
+      await showGameHelpDialog(context);
+    } finally {
+      // If we've been disposed while the dialog was up, do nothing else.
+      if (!mounted) {
+        _pausedByHelpDialog = false;
+      } else {
+        _pausedByHelpDialog = false;
+        // Continue the same cycle from the frozen point.
+        _shrinkCycleStartedAt = DateTime.now();
+        _shrink.forward(from: _shrink.value);
+      }
+    }
   }
 
   HitJudgement _judge(double r) {
@@ -328,7 +351,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // Две близкие гармоники — траектория без «рёбер», движение мягче.
     final double ox = math.sin(t * 0.9) * amp + math.sin(t * 1.73) * amp * 0.15;
     final double oy = math.cos(t * 1.1) * amp * 0.72 + math.cos(t * 1.95) * amp * 0.11;
-    _centerOffset.value = Offset(ox, oy);
+    final Offset target = Offset(ox, oy);
+    // Доп. сглаживание положения, чтобы не чувствовались микро-рывки.
+    _centerOffset.value = Offset.lerp(_centerOffset.value, target, 0.085)!;
   }
 
   /// Вехи 2000 / 2300 / 2500 и дальше случайные интервалы — вспышка + частицы.

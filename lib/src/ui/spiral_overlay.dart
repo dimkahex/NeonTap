@@ -37,6 +37,8 @@ class _SpiralOverlayState extends State<SpiralOverlay> with TickerProviderStateM
   /// Вторичная фаза — чаще смена «характера» линии на низком счёте.
   late final AnimationController _ripple;
 
+  Offset _smoothShift = Offset.zero;
+
   @override
   void initState() {
     super.initState();
@@ -83,13 +85,15 @@ class _SpiralOverlayState extends State<SpiralOverlay> with TickerProviderStateM
             // В начале — шире покачивание и мягче «скука»; позже — сдержаннее.
             final double early = 1.0 + (1.0 - prog) * 0.42;
             final double spiralPanX =
-                (math.sin(panT * 0.95) * 22.0 + math.sin(flow * math.pi * 2 * 1.3) * 6.0) * early +
-                    math.sin(ripple * math.pi * 2 * 2.1) * (5.0 + (1.0 - prog) * 8.0);
+                (math.sin(panT * 0.82) * 20.0 + math.sin(flow * math.pi * 2 * 0.92) * 4.6) * early +
+                    math.sin(ripple * math.pi * 2 * 1.35) * (3.8 + (1.0 - prog) * 6.2);
             final double spiralPanY =
-                (math.cos(panT * 1.1) * 5.0 + math.sin(flow * math.pi * 2 * 0.7) * 3.0) * early +
-                    math.cos(ripple * math.pi * 2 * 1.7) * (2.5 + (1.0 - prog) * 5.0);
+                (math.cos(panT * 0.96) * 4.4 + math.sin(flow * math.pi * 2 * 0.58) * 2.4) * early +
+                    math.cos(ripple * math.pi * 2 * 1.12) * (2.0 + (1.0 - prog) * 4.0);
 
-            final Offset spiralShift = Offset(spiralPanX, spiralPanY);
+            final Offset targetShift = Offset(spiralPanX, spiralPanY);
+            _smoothShift = Offset.lerp(_smoothShift, targetShift, 0.075)!;
+            final Offset spiralShift = _smoothShift;
 
             final double twistSign = math.sin(flow * math.pi * 2 * 0.62) >= 0 ? 1.0 : -1.0;
 
