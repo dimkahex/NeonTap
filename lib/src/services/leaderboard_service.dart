@@ -172,7 +172,12 @@ class LeaderboardService {
     if (!kFirebaseOnlineFeaturesEnabled) {
       return;
     }
-    await _ensureAuth();
+    try {
+      await _ensureAuth().timeout(const Duration(seconds: 6));
+    } catch (e) {
+      status.value = 'Firebase init/auth timed out: $e';
+      return;
+    }
     if (!_firebaseReady) {
       return;
     }
@@ -181,21 +186,41 @@ class LeaderboardService {
       return;
     }
     final DatabaseReference ref = FirebaseDatabase.instance.ref('leaderboard/global/$uid');
-    final DataSnapshot snap = await ref.get();
+    DataSnapshot snap;
+    try {
+      snap = await ref.get().timeout(const Duration(seconds: 6));
+    } catch (e) {
+      status.value = 'RTDB read failed: $e';
+      return;
+    }
     final String dn = displayName.trim().isEmpty ? 'Player' : displayName.trim();
     if (!snap.exists) {
       final (int bestScore, int bestCombo) = await LocalStats.getBest();
-      await ref.set(<String, Object?>{
-        'displayName': dn,
-        'score': bestScore,
-        'bestCombo': bestCombo,
-        'updatedAt': ServerValue.timestamp,
-      });
+      try {
+        await ref
+            .set(<String, Object?>{
+              'displayName': dn,
+              'score': bestScore,
+              'bestCombo': bestCombo,
+              'updatedAt': ServerValue.timestamp,
+            })
+            .timeout(const Duration(seconds: 6));
+        status.value = null;
+      } catch (e) {
+        status.value = 'RTDB write failed: $e';
+      }
       return;
     }
-    await ref.update(<String, Object?>{
-      'displayName': dn,
-      'updatedAt': ServerValue.timestamp,
-    });
+    try {
+      await ref
+          .update(<String, Object?>{
+            'displayName': dn,
+            'updatedAt': ServerValue.timestamp,
+          })
+          .timeout(const Duration(seconds: 6));
+      status.value = null;
+    } catch (e) {
+      status.value = 'RTDB write failed: $e';
+    }
   }
 }

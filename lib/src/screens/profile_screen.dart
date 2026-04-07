@@ -49,50 +49,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _load() async {
+    // Never block the whole screen on a single RTDB call: load what we can.
     try {
       final String n = await PlayerPrefs.getDisplayName();
       _name.text = n;
       _lastSavedName = n;
-      final String code = await FriendsService.ensureFriendCode();
+    } catch (_) {
+      // ignore
+    }
+
+    String code = _friendCode;
+    try {
+      code = await FriendsService.ensureFriendCode();
+    } catch (_) {
+      // ignore
+    }
+
+    List<_FriendRow> rows = <_FriendRow>[];
+    try {
       final List<String> uids = await FriendsService.listFriendUids();
-      final List<_FriendRow> rows = <_FriendRow>[];
+      final List<_FriendRow> out = <_FriendRow>[];
       for (final String uid in uids) {
         final String name = await FriendsService.displayNameForUid(uid);
-        rows.add(_FriendRow(uid: uid, displayName: name));
+        out.add(_FriendRow(uid: uid, displayName: name));
       }
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _friendCode = code.trim();
-        _friends = rows;
-        _loading = false;
-      });
+      rows = out;
     } catch (_) {
-      if (!mounted) return;
-      // Fall back to local-only UI; avoid infinite spinner.
-      setState(() {
-        _friendCode = _friendCode.isEmpty ? '—' : _friendCode;
-        _friends = <_FriendRow>[];
-        _loading = false;
-      });
+      // ignore (keep empty list)
     }
+
+    if (!mounted) return;
+    setState(() {
+      _friendCode = code.trim().isEmpty ? '—' : code.trim();
+      _friends = rows;
+      _loading = false;
+    });
   }
 
   Future<void> _saveName() async {
     if (_savingName) return;
     setState(() => _savingName = true);
-    await PlayerPrefs.setDisplayName(_name.text);
-    final String saved = await PlayerPrefs.getDisplayName();
-    await LeaderboardService.pushDisplayName(saved);
-    if (!mounted) {
-      return;
+    String saved = _name.text.trim();
+    try {
+      await PlayerPrefs.setDisplayName(_name.text);
+      saved = await PlayerPrefs.getDisplayName();
+
+      // Don't let network stalls freeze the UI forever.
+      await LeaderboardService.pushDisplayName(saved).timeout(const Duration(seconds: 6));
+    } catch (_) {
+      // Keep local save even if Firebase stalls/offline.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _savingName = false;
+          _lastSavedName = saved;
+          _savedAt = DateTime.now();
+        });
+      }
     }
-    setState(() {
-      _savingName = false;
-      _lastSavedName = saved;
-      _savedAt = DateTime.now();
-    });
+
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context)!.snackNameSaved)),
     );
@@ -230,16 +246,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     l10n.profileFriendCodeHint,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
                   ),
-                  if (kFirebaseOnlineFeaturesEnabled) ...<Widget>[
-                    const SizedBox(height: 28),
+                  const SizedBox(height: 28),
+                  Text(
+                    l10n.profileAddFriend,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          letterSpacing: 1.2,
+                          color: Colors.white70,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (!kFirebaseOnlineFeaturesEnabled)
                     Text(
-                      l10n.profileAddFriend,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            letterSpacing: 1.2,
-                            color: Colors.white70,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
+                      l10n.profileFirebaseLaterNote,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white54),
+                    )
+                  else
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -261,38 +282,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 28),
-                    Text(
-                      l10n.profileFriends,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            letterSpacing: 1.2,
-                            color: Colors.white70,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (_friends.isEmpty)
-                      Text(
-                        l10n.profileFriendsEmpty,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white54),
-                      )
-                    else
-                      ..._friends.map(
-                        (_FriendRow r) => ListTile(
-                          title: Text(r.displayName),
-                          subtitle: Text(r.uid, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.close, color: Colors.white54),
-                            onPressed: () => unawaited(_removeFriend(r.uid)),
-                          ),
+                  const SizedBox(height: 28),
+                  Text(
+                    l10n.profileFriends,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          letterSpacing: 1.2,
+                          color: Colors.white70,
                         ),
-                      ),
-                  ] else ...<Widget>[
-                    const SizedBox(height: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  if (!kFirebaseOnlineFeaturesEnabled)
                     Text(
                       l10n.profileFirebaseLaterNote,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white54),
+                    )
+                  else if (_friends.isEmpty)
+                    Text(
+                      l10n.profileFriendsEmpty,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white54),
+                    )
+                  else
+                    ..._friends.map(
+                      (_FriendRow r) => ListTile(
+                        title: Text(r.displayName),
+                        subtitle: Text(r.uid, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white54),
+                          onPressed: () => unawaited(_removeFriend(r.uid)),
+                        ),
+                      ),
                     ),
-                  ],
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).maybePop(),
