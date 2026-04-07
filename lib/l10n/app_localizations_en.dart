@@ -284,6 +284,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get challengesNewTooltip => 'New challenge';
 
   @override
+  String get challengesMakeChallenge => 'MAKE A CHALLENGE';
+
+  @override
   String get challengesFirebaseDisabled =>
       'Player vs player challenges unlock after Firebase.\n\nSet kFirebaseOnlineFeaturesEnabled = true\nand follow firebase/README.md';
 
@@ -348,10 +351,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createChallengeTitle => 'NEW CHALLENGE';
 
   @override
-  String get createChallengeFriendCode => 'FRIEND CODE';
+  String get createChallengeFriend => 'FRIEND';
 
   @override
-  String get createChallengeHint6 => '6 characters';
+  String get createChallengeNoFriends =>
+      'Add at least one friend in Profile first.';
 
   @override
   String get createChallengeDuration => 'DURATION';
@@ -374,6 +378,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createChallengeSent => 'Challenge sent';
+
+  @override
+  String snackIncomingChallenge(String name) {
+    return 'New challenge from $name';
+  }
 
   @override
   String get snackNameSaved => 'Name saved';

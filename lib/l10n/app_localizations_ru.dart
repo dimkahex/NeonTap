@@ -284,6 +284,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get challengesNewTooltip => 'Новый вызов';
 
   @override
+  String get challengesMakeChallenge => 'СДЕЛАТЬ ВЫЗОВ';
+
+  @override
   String get challengesFirebaseDisabled =>
       'Вызовы между игроками включатся после Firebase.\n\nПоставьте kFirebaseOnlineFeaturesEnabled = true\nи выполните шаги из firebase/README.md';
 
@@ -348,10 +351,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createChallengeTitle => 'НОВЫЙ ВЫЗОВ';
 
   @override
-  String get createChallengeFriendCode => 'КОД ДРУГА';
+  String get createChallengeFriend => 'ДРУГ';
 
   @override
-  String get createChallengeHint6 => '6 символов';
+  String get createChallengeNoFriends =>
+      'Сначала добавьте хотя бы одного друга в Профиле.';
 
   @override
   String get createChallengeDuration => 'ДЛИТЕЛЬНОСТЬ';
@@ -374,6 +378,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get createChallengeSent => 'Вызов отправлен';
+
+  @override
+  String snackIncomingChallenge(String name) {
+    return 'Новый вызов от $name';
+  }
 
   @override
   String get snackNameSaved => 'Имя сохранено';

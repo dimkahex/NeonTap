@@ -590,6 +590,12 @@ abstract class AppLocalizations {
   /// **'New challenge'**
   String get challengesNewTooltip;
 
+  /// No description provided for @challengesMakeChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'MAKE A CHALLENGE'**
+  String get challengesMakeChallenge;
+
   /// No description provided for @challengesFirebaseDisabled.
   ///
   /// In en, this message translates to:
@@ -704,17 +710,17 @@ abstract class AppLocalizations {
   /// **'NEW CHALLENGE'**
   String get createChallengeTitle;
 
-  /// No description provided for @createChallengeFriendCode.
+  /// No description provided for @createChallengeFriend.
   ///
   /// In en, this message translates to:
-  /// **'FRIEND CODE'**
-  String get createChallengeFriendCode;
+  /// **'FRIEND'**
+  String get createChallengeFriend;
 
-  /// No description provided for @createChallengeHint6.
+  /// No description provided for @createChallengeNoFriends.
   ///
   /// In en, this message translates to:
-  /// **'6 characters'**
-  String get createChallengeHint6;
+  /// **'Add at least one friend in Profile first.'**
+  String get createChallengeNoFriends;
 
   /// No description provided for @createChallengeDuration.
   ///
@@ -757,6 +763,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Challenge sent'**
   String get createChallengeSent;
+
+  /// No description provided for @snackIncomingChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'New challenge from {name}'**
+  String snackIncomingChallenge(String name);
 
   /// No description provided for @snackNameSaved.
   ///

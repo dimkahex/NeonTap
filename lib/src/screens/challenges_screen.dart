@@ -9,7 +9,6 @@ import '../models/challenge.dart';
 import '../services/challenge_service.dart';
 import '../l10n_ext/challenge_display_name.dart';
 import '../l10n_ext/challenge_duration_l10n.dart';
-import '../l10n_ext/friend_add_error_l10n.dart';
 import '../services/friends_service.dart';
 import '../ui/neon_background.dart';
 
@@ -23,21 +22,15 @@ class ChallengesScreen extends StatefulWidget {
 }
 
 class _ChallengesScreenState extends State<ChallengesScreen> {
+  String? _lastIncomingNotifiedId;
+
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.challengesTitle),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: l10n.challengesNewTooltip,
-            onPressed: kFirebaseOnlineFeaturesEnabled
-                ? () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const _CreateChallengeSheet()))
-                : null,
-          ),
-        ],
+        actions: <Widget>[],
       ),
       body: NeonBackground(
         child: !kFirebaseOnlineFeaturesEnabled
@@ -58,20 +51,65 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   final List<Challenge> all = snap.data ?? <Challenge>[];
-                  if (all.isEmpty) {
-                    return Center(
-                      child: Text(
-                        l10n.challengesEmpty,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
+
+                  // In-app notification: first unseen incoming pending challenge.
+                  final String? myUid = FirebaseAuth.instance.currentUser?.uid;
+                  if (myUid != null) {
+                    final Challenge? incoming = all.where((c) => c.status == ChallengeStatus.pending && c.toUid == myUid).isEmpty
+                        ? null
+                        : all.firstWhere((c) => c.status == ChallengeStatus.pending && c.toUid == myUid);
+                    if (incoming != null && incoming.id != _lastIncomingNotifiedId) {
+                      _lastIncomingNotifiedId = incoming.id;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(l10n.snackIncomingChallenge(challengePersonName(l10n, incoming.fromName)))),
+                        );
+                      });
+                    }
+                  }
+
+                  final Widget makeChallenge = Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+                    child: SizedBox(
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        onPressed: kFirebaseOnlineFeaturesEnabled
+                            ? () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(builder: (_) => const _CreateChallengeSheet()),
+                                )
+                            : null,
+                        icon: const Icon(Icons.add),
+                        label: Text(l10n.challengesMakeChallenge),
                       ),
+                    ),
+                  );
+
+                  if (all.isEmpty) {
+                    return Column(
+                      children: <Widget>[
+                        makeChallenge,
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            l10n.challengesEmpty,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
+                          ),
+                        ),
+                        const Spacer(),
+                      ],
                     );
                   }
                   return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-                    itemCount: all.length,
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+                    itemCount: all.length + 1,
                     separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0x22FFFFFF)),
-                    itemBuilder: (BuildContext context, int i) => _ChallengeCard(c: all[i]),
+                    itemBuilder: (BuildContext context, int i) {
+                      if (i == 0) return makeChallenge;
+                      return _ChallengeCard(c: all[i - 1]);
+                    },
                   );
                 },
               ),
@@ -266,36 +304,58 @@ class _CreateChallengeSheet extends StatefulWidget {
 }
 
 class _CreateChallengeSheetState extends State<_CreateChallengeSheet> {
-  final TextEditingController _code = TextEditingController();
+  bool _loadingFriends = true;
+  List<_FriendPick> _friends = <_FriendPick>[];
+  _FriendPick? _pick;
   ChallengeDuration _dur = ChallengeDuration.hour1;
   bool _busy = false;
 
   @override
+  void initState() {
+    super.initState();
+    unawaited(_loadFriends());
+  }
+
+  @override
   void dispose() {
-    _code.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadFriends() async {
+    try {
+      final List<String> uids = await FriendsService.listFriendUids();
+      final List<_FriendPick> out = <_FriendPick>[];
+      for (final String uid in uids) {
+        final String name = await FriendsService.displayNameForUid(uid);
+        out.add(_FriendPick(uid: uid, displayName: name));
+      }
+      out.sort((a, b) => a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
+      if (!mounted) return;
+      setState(() {
+        _friends = out;
+        _pick = out.isEmpty ? null : out.first;
+        _loadingFriends = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _friends = <_FriendPick>[];
+        _pick = null;
+        _loadingFriends = false;
+      });
+    }
   }
 
   Future<void> _send() async {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final _FriendPick? pick = _pick;
+    if (pick == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.createChallengeNoFriends)));
+      return;
+    }
     setState(() => _busy = true);
     try {
-      final FriendAddError? err = await FriendsService.addFriendByCode(_code.text);
-      if (!mounted) return;
-      if (err != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err.message(l10n))));
-        return;
-      }
-      // Resolve friend uid by code (we already validated it above by reading friendCodes).
-      // The friend UID is stored in RTDB; we re-read it directly for challenge.
-      final String code = _code.text.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
-      final String? uid = await FriendsService.resolveUidByCode(code);
-      if (!mounted) return;
-      if (uid == null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.createChallengeCodeNotFound)));
-        return;
-      }
-      final String? id = await ChallengeService.createChallenge(toUid: uid, duration: _dur);
+      final String? id = await ChallengeService.createChallenge(toUid: pick.uid, duration: _dur);
       if (!mounted) return;
       if (id == null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.createChallengeFailed)));
@@ -318,16 +378,34 @@ class _CreateChallengeSheetState extends State<_CreateChallengeSheet> {
           padding: const EdgeInsets.all(18),
           children: <Widget>[
             Text(
-              l10n.createChallengeFriendCode,
+              l10n.createChallengeFriend,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70, letterSpacing: 1.2),
             ),
             const SizedBox(height: 8),
-            TextField(
-              controller: _code,
-              textCapitalization: TextCapitalization.characters,
-              decoration: InputDecoration(border: const OutlineInputBorder(), hintText: l10n.createChallengeHint6),
-              style: const TextStyle(color: Colors.white),
-            ),
+            if (_loadingFriends)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_friends.isEmpty)
+              Text(
+                l10n.createChallengeNoFriends,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+              )
+            else
+              DropdownButtonFormField<_FriendPick>(
+                value: _pick,
+                decoration: const InputDecoration(border: OutlineInputBorder()),
+                items: _friends
+                    .map(
+                      (_FriendPick f) => DropdownMenuItem<_FriendPick>(
+                        value: f,
+                        child: Text(f.displayName, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (_FriendPick? v) => setState(() => _pick = v),
+              ),
             const SizedBox(height: 18),
             Text(
               l10n.createChallengeDuration,
@@ -350,7 +428,7 @@ class _CreateChallengeSheetState extends State<_CreateChallengeSheet> {
             ),
             const SizedBox(height: 18),
             ElevatedButton(
-              onPressed: _busy ? null : _send,
+              onPressed: (_busy || _loadingFriends || _friends.isEmpty) ? null : _send,
               child: Text(_busy ? l10n.createChallengeBusy : l10n.createChallengeSend),
             ),
             const SizedBox(height: 10),
@@ -363,5 +441,12 @@ class _CreateChallengeSheetState extends State<_CreateChallengeSheet> {
       ),
     );
   }
+}
+
+class _FriendPick {
+  const _FriendPick({required this.uid, required this.displayName});
+
+  final String uid;
+  final String displayName;
 }
 
