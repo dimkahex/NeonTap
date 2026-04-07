@@ -28,10 +28,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Сейчас локально • глобал и друзья с Firebase';
 
   @override
-  String get menuVersus => 'VERSUS';
+  String get menuVersus => 'ВЫЗОВЫ';
 
   @override
-  String get menuVersusSubtitle => 'Отомсти другу — дуэли по коду';
+  String get menuVersusSubtitle => 'Соревнуйся с другом — окно времени';
 
   @override
   String get menuProfile => 'ПРОФИЛЬ';
@@ -190,13 +190,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profileTitle => 'ПРОФИЛЬ';
 
   @override
-  String get profileNameInTable => 'ИМЯ В ТАБЛИЦЕ';
+  String get profileNameInTable => 'НИК';
 
   @override
-  String get profileNameHint => 'Как вас видят другие';
+  String get profileNameHint => 'Как тебя видят другие';
 
   @override
-  String get profileSaveName => 'СОХРАНИТЬ ИМЯ';
+  String get profileSaveName => 'СОХРАНИТЬ';
+
+  @override
+  String get profileSaved => 'СОХРАНЕНО';
 
   @override
   String get profileOfflineFirebaseNote =>
@@ -247,20 +250,32 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profileLanguageEn => 'English';
 
   @override
-  String get versusTitle => 'VERSUS';
+  String get versusTitle => 'ВЫЗОВЫ';
 
   @override
-  String get versusHeadline => 'ОТОМСТИ ДРУГУ';
+  String get versusHeadline => 'РЕЖИМ ВЫЗОВОВ';
 
   @override
   String get versusBody =>
-      'Асинхронные вызовы: выбери друга и окно времени.\nСчитается лучший один забег в окне.';
+      'Кинь другу вызов на 1, 6 или 24 часа.\nВнутри окна времени вы оба стараетесь набрать максимум — считается лучший забег каждого.\n\nПока идёт вызов, таймер будет виден в главном меню.';
 
   @override
   String get versusOpenChallenges => 'ОТКРЫТЬ ВЫЗОВЫ';
 
   @override
   String get versusBack => 'НАЗАД';
+
+  @override
+  String versusActiveTimer(String timeLeft) {
+    return 'АКТИВНЫЙ ВЫЗОВ · $timeLeft';
+  }
+
+  @override
+  String get versusHelpTitle => 'Что такое вызовы?';
+
+  @override
+  String get versusHelpBody =>
+      'Ты выбираешь друга и длительность (1ч / 6ч / 24ч). В течение окна каждый делает попытки, и учитывается лучший результат каждого. Можно принять/отклонить вызов, а также смотреть историю.';
 
   @override
   String get challengesTitle => 'ВЫЗОВЫ';
@@ -398,13 +413,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get defaultPlayerName => 'Игрок';
 
   @override
-  String get durationDay1 => '1 день';
+  String get durationHour1 => '1 час';
 
   @override
-  String get durationDay2 => '2 дня';
+  String get durationHour6 => '6 часов';
 
   @override
-  String get durationWeek1 => '1 неделя';
+  String get durationDay1 => '24 часа';
 
   @override
   String get settingsTitle => 'НАСТРОЙКИ';

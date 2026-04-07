@@ -1,14 +1,14 @@
 enum ChallengeDuration {
+  hour1,
+  hour6,
   day1,
-  day2,
-  week1,
 }
 
 extension ChallengeDurationUi on ChallengeDuration {
   Duration get duration => switch (this) {
-        ChallengeDuration.day1 => const Duration(days: 1),
-        ChallengeDuration.day2 => const Duration(days: 2),
-        ChallengeDuration.week1 => const Duration(days: 7),
+        ChallengeDuration.hour1 => const Duration(hours: 1),
+        ChallengeDuration.hour6 => const Duration(hours: 6),
+        ChallengeDuration.day1 => const Duration(hours: 24),
       };
 }
 

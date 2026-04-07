@@ -12,6 +12,8 @@ import 'leaderboard_screen.dart';
 import 'game_screen.dart';
 import 'profile_screen.dart';
 import 'versus_screen.dart';
+import '../services/challenge_service.dart';
+import '../models/challenge.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -72,6 +74,41 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 ),
               ),
               const SizedBox(height: 12),
+              StreamBuilder<List<Challenge>>(
+                stream: ChallengeService.watchMyChallenges(),
+                builder: (BuildContext context, AsyncSnapshot<List<Challenge>> snap) {
+                  final List<Challenge> all = snap.data ?? <Challenge>[];
+                  final int now = DateTime.now().millisecondsSinceEpoch;
+                  final Challenge? active = all.where((c) => c.status == ChallengeStatus.active && now < c.endsAtMs).isEmpty
+                      ? null
+                      : all.firstWhere((c) => c.status == ChallengeStatus.active && now < c.endsAtMs);
+                  if (active == null) return const SizedBox.shrink();
+                  final Duration left = Duration(milliseconds: (active.endsAtMs - now).clamp(0, 1 << 30));
+                  String two(int v) => v.toString().padLeft(2, '0');
+                  final int h = left.inHours;
+                  final int m = left.inMinutes.remainder(60);
+                  final int s = left.inSeconds.remainder(60);
+                  final String tl = h > 0 ? '${two(h)}:${two(m)}:${two(s)}' : '${two(m)}:${two(s)}';
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF35E6FF).withValues(alpha: 0.35)),
+                      color: Colors.black.withValues(alpha: 0.18),
+                    ),
+                    child: Text(
+                      l10n.versusActiveTimer(tl),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: const Color(0xFF35E6FF),
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                          ),
+                    ),
+                  );
+                },
+              ),
               NeonButton(
                 label: l10n.menuPlay,
                 subtitle: l10n.menuPlaySubtitle,

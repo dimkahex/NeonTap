@@ -137,13 +137,13 @@ abstract class AppLocalizations {
   /// No description provided for @menuVersus.
   ///
   /// In en, this message translates to:
-  /// **'VERSUS'**
+  /// **'CHALLENGES'**
   String get menuVersus;
 
   /// No description provided for @menuVersusSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Revenge a friend — code-based duels'**
+  /// **'Compete with a friend — timed window'**
   String get menuVersusSubtitle;
 
   /// No description provided for @menuProfile.
@@ -419,7 +419,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileNameInTable.
   ///
   /// In en, this message translates to:
-  /// **'NAME ON LEADERBOARD'**
+  /// **'NICKNAME'**
   String get profileNameInTable;
 
   /// No description provided for @profileNameHint.
@@ -431,8 +431,14 @@ abstract class AppLocalizations {
   /// No description provided for @profileSaveName.
   ///
   /// In en, this message translates to:
-  /// **'SAVE NAME'**
+  /// **'SAVE'**
   String get profileSaveName;
+
+  /// No description provided for @profileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVED'**
+  String get profileSaved;
 
   /// No description provided for @profileOfflineFirebaseNote.
   ///
@@ -527,19 +533,19 @@ abstract class AppLocalizations {
   /// No description provided for @versusTitle.
   ///
   /// In en, this message translates to:
-  /// **'VERSUS'**
+  /// **'CHALLENGES'**
   String get versusTitle;
 
   /// No description provided for @versusHeadline.
   ///
   /// In en, this message translates to:
-  /// **'REVENGE A FRIEND'**
+  /// **'CHALLENGE MODE'**
   String get versusHeadline;
 
   /// No description provided for @versusBody.
   ///
   /// In en, this message translates to:
-  /// **'Async challenges: pick a friend and a time window.\nYour best single run in the window counts.'**
+  /// **'Send a challenge to a friend for 1h, 6h, or 24h.\nWithin the time window, both of you play — only your best run counts.\n\nWhile a challenge is active, a countdown appears on the main menu.'**
   String get versusBody;
 
   /// No description provided for @versusOpenChallenges.
@@ -553,6 +559,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'BACK'**
   String get versusBack;
+
+  /// No description provided for @versusActiveTimer.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVE CHALLENGE · {timeLeft}'**
+  String versusActiveTimer(String timeLeft);
+
+  /// No description provided for @versusHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What are challenges?'**
+  String get versusHelpTitle;
+
+  /// No description provided for @versusHelpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a friend and duration (1h / 6h / 24h). During the window you both attempt runs; the best score of each player counts. You can accept/decline and view history.'**
+  String get versusHelpBody;
 
   /// No description provided for @challengesTitle.
   ///
@@ -806,23 +830,23 @@ abstract class AppLocalizations {
   /// **'Player'**
   String get defaultPlayerName;
 
+  /// No description provided for @durationHour1.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour'**
+  String get durationHour1;
+
+  /// No description provided for @durationHour6.
+  ///
+  /// In en, this message translates to:
+  /// **'6 hours'**
+  String get durationHour6;
+
   /// No description provided for @durationDay1.
   ///
   /// In en, this message translates to:
-  /// **'1 day'**
+  /// **'24 hours'**
   String get durationDay1;
-
-  /// No description provided for @durationDay2.
-  ///
-  /// In en, this message translates to:
-  /// **'2 days'**
-  String get durationDay2;
-
-  /// No description provided for @durationWeek1.
-  ///
-  /// In en, this message translates to:
-  /// **'1 week'**
-  String get durationWeek1;
 
   /// No description provided for @settingsTitle.
   ///

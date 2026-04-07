@@ -267,7 +267,7 @@ class _CreateChallengeSheet extends StatefulWidget {
 
 class _CreateChallengeSheetState extends State<_CreateChallengeSheet> {
   final TextEditingController _code = TextEditingController();
-  ChallengeDuration _dur = ChallengeDuration.day1;
+  ChallengeDuration _dur = ChallengeDuration.hour1;
   bool _busy = false;
 
   @override

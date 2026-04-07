@@ -28,10 +28,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Local now • global & friends with Firebase';
 
   @override
-  String get menuVersus => 'VERSUS';
+  String get menuVersus => 'CHALLENGES';
 
   @override
-  String get menuVersusSubtitle => 'Revenge a friend — code-based duels';
+  String get menuVersusSubtitle => 'Compete with a friend — timed window';
 
   @override
   String get menuProfile => 'PROFILE';
@@ -190,13 +190,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileTitle => 'PROFILE';
 
   @override
-  String get profileNameInTable => 'NAME ON LEADERBOARD';
+  String get profileNameInTable => 'NICKNAME';
 
   @override
   String get profileNameHint => 'How others see you';
 
   @override
-  String get profileSaveName => 'SAVE NAME';
+  String get profileSaveName => 'SAVE';
+
+  @override
+  String get profileSaved => 'SAVED';
 
   @override
   String get profileOfflineFirebaseNote =>
@@ -247,20 +250,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileLanguageEn => 'English';
 
   @override
-  String get versusTitle => 'VERSUS';
+  String get versusTitle => 'CHALLENGES';
 
   @override
-  String get versusHeadline => 'REVENGE A FRIEND';
+  String get versusHeadline => 'CHALLENGE MODE';
 
   @override
   String get versusBody =>
-      'Async challenges: pick a friend and a time window.\nYour best single run in the window counts.';
+      'Send a challenge to a friend for 1h, 6h, or 24h.\nWithin the time window, both of you play — only your best run counts.\n\nWhile a challenge is active, a countdown appears on the main menu.';
 
   @override
   String get versusOpenChallenges => 'OPEN CHALLENGES';
 
   @override
   String get versusBack => 'BACK';
+
+  @override
+  String versusActiveTimer(String timeLeft) {
+    return 'ACTIVE CHALLENGE · $timeLeft';
+  }
+
+  @override
+  String get versusHelpTitle => 'What are challenges?';
+
+  @override
+  String get versusHelpBody =>
+      'Pick a friend and duration (1h / 6h / 24h). During the window you both attempt runs; the best score of each player counts. You can accept/decline and view history.';
 
   @override
   String get challengesTitle => 'CHALLENGES';
@@ -398,13 +413,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get defaultPlayerName => 'Player';
 
   @override
-  String get durationDay1 => '1 day';
+  String get durationHour1 => '1 hour';
 
   @override
-  String get durationDay2 => '2 days';
+  String get durationHour6 => '6 hours';
 
   @override
-  String get durationWeek1 => '1 week';
+  String get durationDay1 => '24 hours';
 
   @override
   String get settingsTitle => 'SETTINGS';

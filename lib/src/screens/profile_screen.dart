@@ -28,6 +28,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _loading = true;
   List<_FriendRow> _friends = <_FriendRow>[];
 
+  String _lastSavedName = '';
+  bool _savingName = false;
+  DateTime? _savedAt;
+
   @override
   void dispose() {
     _name.dispose();
@@ -39,12 +43,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     unawaited(_load());
+    _name.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   Future<void> _load() async {
     try {
       final String n = await PlayerPrefs.getDisplayName();
       _name.text = n;
+      _lastSavedName = n;
       final String code = await FriendsService.ensureFriendCode();
       final List<String> uids = await FriendsService.listFriendUids();
       final List<_FriendRow> rows = <_FriendRow>[];
@@ -72,11 +80,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _saveName() async {
+    if (_savingName) return;
+    setState(() => _savingName = true);
     await PlayerPrefs.setDisplayName(_name.text);
-    await LeaderboardService.pushDisplayName(await PlayerPrefs.getDisplayName());
+    final String saved = await PlayerPrefs.getDisplayName();
+    await LeaderboardService.pushDisplayName(saved);
     if (!mounted) {
       return;
     }
+    setState(() {
+      _savingName = false;
+      _lastSavedName = saved;
+      _savedAt = DateTime.now();
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context)!.snackNameSaved)),
     );
@@ -110,6 +126,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final bool dirtyName = _name.text.trim() != _lastSavedName.trim();
+    final bool showSaved = _savedAt != null && DateTime.now().difference(_savedAt!) < const Duration(seconds: 2);
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.profileTitle),
@@ -145,8 +163,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton(
-                    onPressed: _saveName,
-                    child: Text(l10n.profileSaveName),
+                    onPressed: (!dirtyName || _savingName) ? null : _saveName,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        if (showSaved) ...<Widget>[
+                          const Icon(Icons.check, size: 18),
+                          const SizedBox(width: 8),
+                          Text(l10n.profileSaved),
+                        ] else if (_savingName) ...<Widget>[
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(l10n.createChallengeBusy),
+                        ] else
+                          Text(l10n.profileSaveName),
+                      ],
+                    ),
                   ),
                   if (!kFirebaseOnlineFeaturesEnabled) ...<Widget>[
                     const SizedBox(height: 16),
