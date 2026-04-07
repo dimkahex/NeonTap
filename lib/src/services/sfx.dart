@@ -6,7 +6,10 @@ import 'settings_prefs.dart';
 class Sfx {
   Sfx._();
 
+  /// One-shot SFX (longer samples): mediaPlayer is more reliable for longer WAVs on Android.
   static final AudioPlayer _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+  /// Short click/tick SFX: lowLatency so rapid taps don't get dropped.
+  static final AudioPlayer _fastPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
   static final AudioPlayer _tapPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
   static final AudioPlayer _musicPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.loop);
 
@@ -53,6 +56,9 @@ class Sfx {
       await _player.setPlayerMode(PlayerMode.mediaPlayer);
       await _player.setAudioContext(_ctxSfx);
 
+      await _fastPlayer.setPlayerMode(PlayerMode.lowLatency);
+      await _fastPlayer.setAudioContext(_ctxSfx);
+
       await _tapPlayer.setPlayerMode(PlayerMode.lowLatency);
       await _tapPlayer.setAudioContext(_ctxSfx);
     } catch (_) {}
@@ -66,6 +72,7 @@ class Sfx {
     _volume01 = (p / 100.0).clamp(0.0, 1.0);
     try {
       await _player.setVolume(_volume01);
+      await _fastPlayer.setVolume(_volume01);
       await _tapPlayer.setVolume(_volume01);
       await _musicPlayer.setVolume(_volume01);
     } catch (_) {}
@@ -127,8 +134,10 @@ class Sfx {
       HitJudgement.ok => 'sfx/ok_click.wav',
       HitJudgement.miss => 'sfx/miss_error.wav',
     };
+    final bool fast = j == HitJudgement.ok || j == HitJudgement.good || j == HitJudgement.cool;
     try {
-      await _player.play(AssetSource(asset));
+      // Using a dedicated low-latency player avoids every-other-tap drops for rapid OK/GOOD clicks.
+      await (fast ? _fastPlayer : _player).play(AssetSource(asset));
     } catch (_) {
       // ignore
     }
@@ -168,6 +177,7 @@ class Sfx {
   static Future<void> stop() async {
     try {
       await _player.stop();
+      await _fastPlayer.stop();
       await _tapPlayer.stop();
     } catch (_) {
       // ignore
