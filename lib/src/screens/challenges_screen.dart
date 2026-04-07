@@ -24,13 +24,30 @@ class ChallengesScreen extends StatefulWidget {
 class _ChallengesScreenState extends State<ChallengesScreen> {
   String? _lastIncomingNotifiedId;
 
+  void _openCreateChallenge() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const _CreateChallengeSheet()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.challengesTitle),
-        actions: <Widget>[],
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: l10n.challengesNewTooltip,
+            onPressed: kFirebaseOnlineFeaturesEnabled ? _openCreateChallenge : null,
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: kFirebaseOnlineFeaturesEnabled ? _openCreateChallenge : null,
+        icon: const Icon(Icons.add),
+        label: Text(l10n.challengesMakeChallenge),
       ),
       body: NeonBackground(
         child: !kFirebaseOnlineFeaturesEnabled
@@ -74,11 +91,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                     child: SizedBox(
                       height: 46,
                       child: ElevatedButton.icon(
-                        onPressed: kFirebaseOnlineFeaturesEnabled
-                            ? () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(builder: (_) => const _CreateChallengeSheet()),
-                                )
-                            : null,
+                        onPressed: _openCreateChallenge,
                         icon: const Icon(Icons.add),
                         label: Text(l10n.challengesMakeChallenge),
                       ),
