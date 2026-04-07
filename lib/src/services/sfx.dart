@@ -8,8 +8,11 @@ class Sfx {
 
   /// One-shot SFX (longer samples): mediaPlayer is more reliable for longer WAVs on Android.
   static final AudioPlayer _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
-  /// Short click/tick SFX: lowLatency so rapid taps don't get dropped.
-  static final AudioPlayer _fastPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+  /// Short click/tick SFX: use a small low-latency pool so rapid consecutive hits don't get dropped.
+  static const int _kFastPoolSize = 5;
+  static final List<AudioPlayer> _fastPool =
+      List<AudioPlayer>.generate(_kFastPoolSize, (_) => AudioPlayer()..setReleaseMode(ReleaseMode.stop));
+  static int _fastPoolI = 0;
   static final AudioPlayer _tapPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
   static final AudioPlayer _musicPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.loop);
 
@@ -56,8 +59,10 @@ class Sfx {
       await _player.setPlayerMode(PlayerMode.mediaPlayer);
       await _player.setAudioContext(_ctxSfx);
 
-      await _fastPlayer.setPlayerMode(PlayerMode.lowLatency);
-      await _fastPlayer.setAudioContext(_ctxSfx);
+      for (final AudioPlayer p in _fastPool) {
+        await p.setPlayerMode(PlayerMode.lowLatency);
+        await p.setAudioContext(_ctxSfx);
+      }
 
       await _tapPlayer.setPlayerMode(PlayerMode.lowLatency);
       await _tapPlayer.setAudioContext(_ctxSfx);
@@ -72,7 +77,9 @@ class Sfx {
     _volume01 = (p / 100.0).clamp(0.0, 1.0);
     try {
       await _player.setVolume(_volume01);
-      await _fastPlayer.setVolume(_volume01);
+      for (final AudioPlayer p in _fastPool) {
+        await p.setVolume(_volume01);
+      }
       await _tapPlayer.setVolume(_volume01);
       await _musicPlayer.setVolume(_volume01);
     } catch (_) {}
@@ -136,8 +143,17 @@ class Sfx {
     };
     final bool fast = j == HitJudgement.ok || j == HitJudgement.good || j == HitJudgement.cool;
     try {
-      // Using a dedicated low-latency player avoids every-other-tap drops for rapid OK/GOOD clicks.
-      await (fast ? _fastPlayer : _player).play(AssetSource(asset));
+      if (!fast) {
+        await _player.play(AssetSource(asset));
+        return;
+      }
+      // Round-robin over low-latency pool so back-to-back clicks don't stomp each other.
+      final AudioPlayer p = _fastPool[_fastPoolI++ % _fastPool.length];
+      try {
+        // Ensure a retrigger even if the same asset is still playing.
+        await p.stop();
+      } catch (_) {}
+      await p.play(AssetSource(asset));
     } catch (_) {
       // ignore
     }
@@ -177,7 +193,9 @@ class Sfx {
   static Future<void> stop() async {
     try {
       await _player.stop();
-      await _fastPlayer.stop();
+      for (final AudioPlayer p in _fastPool) {
+        await p.stop();
+      }
       await _tapPlayer.stop();
     } catch (_) {
       // ignore
