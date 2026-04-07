@@ -3,8 +3,8 @@
     "leaderboard": {
       "global": {
         ".indexOn": "score",
+        ".read": true,
         "$uid": {
-          ".read": true,
           ".write": "auth != null && auth.uid == $uid",
           ".validate": "newData.hasChildren(['score', 'updatedAt']) && newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 999999999 && newData.child('updatedAt').isNumber() && (!newData.hasChild('displayName') || newData.child('displayName').isString()) && (!newData.hasChild('bestCombo') || newData.child('bestCombo').isNumber())"
         }

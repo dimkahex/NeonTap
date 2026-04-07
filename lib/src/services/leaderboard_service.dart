@@ -35,7 +35,7 @@ class LeaderboardService {
     } catch (e) {
       // Offline or missing config.
       status.value =
-          'Firebase init/auth failed: $e\nCheck internet, enable Anonymous Auth, publish RTDB rules, and ensure /leaderboard/global is readable with .indexOn(\"score\").';
+          'Firebase init/auth failed: $e\nCheck internet, enable Anonymous Auth, publish RTDB rules, and ensure /leaderboard/global is readable with .indexOn("score").';
     }
   }
 
