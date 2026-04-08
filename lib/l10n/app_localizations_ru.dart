@@ -282,7 +282,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get versusHelpBody =>
-      'Ты выбираешь друга и длительность (1ч / 6ч / 24ч). В течение окна каждый делает попытки, и учитывается лучший результат каждого. Можно принять/отклонить вызов, а также смотреть историю.';
+      'Это соревнование с другом на время.\n\nВыбираешь друга и режим: 1 час / 2 часа / 6 часов.\nПока идёт окно — вы оба делаете попытки, и учитывается лучший результат каждого.\n\nУ друга появится входящий вызов: принять или отклонить. После принятия стартует таймер у вас обоих.';
 
   @override
   String get challengesTitle => 'ВЫЗОВЫ';
@@ -432,10 +432,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get durationHour1 => '1 час';
 
   @override
-  String get durationHour6 => '6 часов';
+  String get durationHour2 => '2 часа';
 
   @override
-  String get durationDay1 => '24 часа';
+  String get durationHour6 => '6 часов';
 
   @override
   String get settingsTitle => 'НАСТРОЙКИ';

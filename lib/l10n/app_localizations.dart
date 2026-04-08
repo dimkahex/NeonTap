@@ -587,7 +587,7 @@ abstract class AppLocalizations {
   /// No description provided for @versusHelpBody.
   ///
   /// In en, this message translates to:
-  /// **'Pick a friend and duration (1h / 6h / 24h). During the window you both attempt runs; the best score of each player counts. You can accept/decline and view history.'**
+  /// **'A timed competition with a friend.\n\nPick a friend and a mode: 1h / 2h / 6h.\nDuring the window you both play — only each player\'s best run counts.\n\nYour friend will receive an incoming challenge: accept or decline. After acceptance the timer starts for both of you.'**
   String get versusHelpBody;
 
   /// No description provided for @challengesTitle.
@@ -860,17 +860,17 @@ abstract class AppLocalizations {
   /// **'1 hour'**
   String get durationHour1;
 
+  /// No description provided for @durationHour2.
+  ///
+  /// In en, this message translates to:
+  /// **'2 hours'**
+  String get durationHour2;
+
   /// No description provided for @durationHour6.
   ///
   /// In en, this message translates to:
   /// **'6 hours'**
   String get durationHour6;
-
-  /// No description provided for @durationDay1.
-  ///
-  /// In en, this message translates to:
-  /// **'24 hours'**
-  String get durationDay1;
 
   /// No description provided for @settingsTitle.
   ///

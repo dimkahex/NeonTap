@@ -282,7 +282,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get versusHelpBody =>
-      'Pick a friend and duration (1h / 6h / 24h). During the window you both attempt runs; the best score of each player counts. You can accept/decline and view history.';
+      'A timed competition with a friend.\n\nPick a friend and a mode: 1h / 2h / 6h.\nDuring the window you both play — only each player\'s best run counts.\n\nYour friend will receive an incoming challenge: accept or decline. After acceptance the timer starts for both of you.';
 
   @override
   String get challengesTitle => 'CHALLENGES';
@@ -432,10 +432,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get durationHour1 => '1 hour';
 
   @override
-  String get durationHour6 => '6 hours';
+  String get durationHour2 => '2 hours';
 
   @override
-  String get durationDay1 => '24 hours';
+  String get durationHour6 => '6 hours';
 
   @override
   String get settingsTitle => 'SETTINGS';
