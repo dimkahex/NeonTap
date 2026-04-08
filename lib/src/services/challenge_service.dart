@@ -10,6 +10,8 @@ import 'player_prefs.dart';
 class ChallengeService {
   ChallengeService._();
 
+  static const Duration _kOpTimeout = Duration(seconds: 6);
+
   static Future<void> _ensureAuth() async {
     if (!kFirebaseOnlineFeaturesEnabled) {
       return;
@@ -83,27 +85,37 @@ class ChallengeService {
   }
 
   static Stream<List<Challenge>> watchMyChallenges() async* {
-    await _ensureAuth();
-    if (!_ready) {
-      yield <Challenge>[];
+    // Always emit quickly so UI never spins forever.
+    yield <Challenge>[];
+
+    try {
+      await _ensureAuth().timeout(_kOpTimeout);
+    } catch (_) {
       return;
     }
+
+    if (!_ready) return;
     final String me = _myUid!;
     final Query q = FirebaseDatabase.instance.ref('challenges').orderByChild('createdAtMs').limitToLast(200);
-    await for (final DatabaseEvent event in q.onValue) {
-      final Object? raw = event.snapshot.value;
-      if (raw is! Map) {
-        yield <Challenge>[];
-        continue;
+    try {
+      await for (final DatabaseEvent event in q.onValue) {
+        final Object? raw = event.snapshot.value;
+        if (raw is! Map) {
+          yield <Challenge>[];
+          continue;
+        }
+        final List<Challenge> out = <Challenge>[];
+        raw.forEach((Object? k, Object? v) {
+          if (k == null || v is! Map) return;
+          final Challenge c = Challenge.fromMap(k.toString(), Map<Object?, Object?>.from(v));
+          if (c.involves(me)) out.add(c);
+        });
+        out.sort((Challenge a, Challenge b) => b.createdAtMs.compareTo(a.createdAtMs));
+        yield out;
       }
-      final List<Challenge> out = <Challenge>[];
-      raw.forEach((Object? k, Object? v) {
-        if (k == null || v is! Map) return;
-        final Challenge c = Challenge.fromMap(k.toString(), Map<Object?, Object?>.from(v));
-        if (c.involves(me)) out.add(c);
-      });
-      out.sort((Challenge a, Challenge b) => b.createdAtMs.compareTo(a.createdAtMs));
-      yield out;
+    } catch (_) {
+      // Keep UI usable (already yielded empty list).
+      return;
     }
   }
 

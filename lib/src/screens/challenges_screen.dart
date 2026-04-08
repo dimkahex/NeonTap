@@ -64,9 +64,6 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
             : StreamBuilder<List<Challenge>>(
                 stream: ChallengeService.watchMyChallenges(),
                 builder: (BuildContext context, AsyncSnapshot<List<Challenge>> snap) {
-                  if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
                   final List<Challenge> all = snap.data ?? <Challenge>[];
 
                   // In-app notification: first unseen incoming pending challenge.
@@ -98,10 +95,39 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                     ),
                   );
 
+                  final Widget header = Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        if (snap.connectionState == ConnectionState.waiting)
+                          const LinearProgressIndicator(minHeight: 2),
+                        const SizedBox(height: 12),
+                        Text(
+                          l10n.versusHeadline,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.1,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.versusBody,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                height: 1.35,
+                              ),
+                        ),
+                        const SizedBox(height: 12),
+                        makeChallenge,
+                      ],
+                    ),
+                  );
+
                   if (all.isEmpty) {
                     return Column(
                       children: <Widget>[
-                        makeChallenge,
+                        header,
                         const Spacer(),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -120,7 +146,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                     itemCount: all.length + 1,
                     separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0x22FFFFFF)),
                     itemBuilder: (BuildContext context, int i) {
-                      if (i == 0) return makeChallenge;
+                      if (i == 0) return header;
                       return _ChallengeCard(c: all[i - 1]);
                     },
                   );
