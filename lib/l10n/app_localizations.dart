@@ -344,6 +344,18 @@ abstract class AppLocalizations {
   /// **'A vertical 9:16 image will be generated — perfect for TikTok and Stories.'**
   String get resultsShareHintFormats;
 
+  /// No description provided for @resultsSharePreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing image…'**
+  String get resultsSharePreparing;
+
+  /// No description provided for @resultsShareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not prepare share image'**
+  String get resultsShareFailed;
+
   /// No description provided for @resultsShareFooter.
   ///
   /// In en, this message translates to:

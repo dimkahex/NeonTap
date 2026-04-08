@@ -144,6 +144,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'A vertical 9:16 image will be generated — perfect for TikTok and Stories.';
 
   @override
+  String get resultsSharePreparing => 'Preparing image…';
+
+  @override
+  String get resultsShareFailed => 'Could not prepare share image';
+
+  @override
   String get resultsShareFooter => 'Play and beat my score';
 
   @override

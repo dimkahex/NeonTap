@@ -18,12 +18,11 @@ extension ShareTemplateUi on ShareTemplate {
 class ResultsShareService {
   ResultsShareService._();
 
-  static Future<void> share({
+  static Future<XFile> prepareShareFile({
     required BuildContext context,
     required RunResult result,
     required ShareTemplate template,
   }) async {
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final Uint8List png = await _renderPng(context: context, result: result, template: template);
 
     final Directory dir = await getTemporaryDirectory();
@@ -33,12 +32,17 @@ class ResultsShareService {
     };
     final File f = File('${dir.path}/$name.png');
     await f.writeAsBytes(png, flush: true);
+    return XFile(f.path, mimeType: 'image/png');
+  }
 
+  static Future<void> sharePrepared({
+    required BuildContext context,
+    required RunResult result,
+    required XFile file,
+  }) async {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     await SharePlus.instance.share(
-      ShareParams(
-        files: <XFile>[XFile(f.path, mimeType: 'image/png')],
-        text: l10n.resultsShareText(result.score),
-      ),
+      ShareParams(files: <XFile>[file], text: l10n.resultsShareText(result.score)),
     );
   }
 
@@ -98,14 +102,7 @@ class ResultsShareService {
         ..strokeWidth = 4
         ..color = accent.withValues(alpha: 0.80),
     );
-    canvas.drawRRect(
-      rr,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 20
-        ..color = accent.withValues(alpha: 0.12)
-        ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 18),
-    );
+    // Avoid heavy blur here (can cause noticeable UI stalls on some devices).
 
     final double left = card.left + 60;
     double y = card.top + 70;
@@ -163,7 +160,7 @@ class ResultsShareService {
         fontSize: 140,
         fontWeight: FontWeight.w900,
         letterSpacing: 2.0,
-        shadows: <Shadow>[Shadow(color: accent.withValues(alpha: 0.50), blurRadius: 20)],
+        shadows: <Shadow>[Shadow(color: accent.withValues(alpha: 0.35), blurRadius: 10)],
       ),
     );
     y += 170;

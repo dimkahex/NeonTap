@@ -49,6 +49,8 @@
   "resultsShareSnackbar": "Я набрал {score} в NEON PULSE!",
   "resultsSharePickPlatform": "Куда поделиться?",
   "resultsShareHintFormats": "Будет создана вертикальная картинка 9:16 — идеально для TikTok и Stories.",
+  "resultsSharePreparing": "Готовим картинку…",
+  "resultsShareFailed": "Не удалось подготовить картинку для шаринга",
   "resultsShareFooter": "Сыграй и побей мой результат",
   "resultsShareText": "Мой результат в NeonPulse: {score}",
   "@resultsShareText": { "placeholders": { "score": { "type": "int" } } },
