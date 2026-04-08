@@ -172,6 +172,8 @@ Future<void> _openShareSheet(BuildContext context, RunResult r) async {
 Future<void> _shareWithLoader(BuildContext context, RunResult r, ShareTemplate template) async {
   final AppLocalizations l10n = AppLocalizations.of(context)!;
   final BuildContext rootContext = context;
+  final NavigatorState nav = Navigator.of(rootContext, rootNavigator: true);
+  final ScaffoldMessengerState messenger = ScaffoldMessenger.of(rootContext);
 
   // Show a lightweight loader so it doesn't feel like a freeze.
   showDialog<void>(
@@ -208,16 +210,21 @@ Future<void> _shareWithLoader(BuildContext context, RunResult r, ShareTemplate t
     await Future<void>.delayed(const Duration(milliseconds: 16));
 
     // ignore: use_build_context_synchronously
-    final XFile file = await ResultsShareService.prepareShareFile(context: rootContext, result: r, template: template);
+    // ignore: use_build_context_synchronously
+    final XFile file = await ResultsShareService.prepareShareFile(
+      context: rootContext,
+      result: r,
+      template: template,
+    ).timeout(const Duration(seconds: 10));
     if (!rootContext.mounted) return;
-    Navigator.of(rootContext, rootNavigator: true).pop(); // loader
+    nav.pop(); // loader
 
     // Don't await: some platforms only complete after returning from external app.
     unawaited(ResultsShareService.sharePrepared(context: rootContext, result: r, file: file));
   } catch (_) {
     if (rootContext.mounted) {
-      Navigator.of(rootContext, rootNavigator: true).maybePop(); // loader
-      ScaffoldMessenger.of(rootContext).showSnackBar(SnackBar(content: Text(l10n.resultsShareFailed)));
+      nav.maybePop(); // loader
+      messenger.showSnackBar(SnackBar(content: Text(l10n.resultsShareFailed)));
     }
   }
 }

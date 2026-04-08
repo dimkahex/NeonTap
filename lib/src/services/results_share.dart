@@ -12,7 +12,9 @@ import '../game/run_result.dart';
 enum ShareTemplate { tiktok, instagram }
 
 extension ShareTemplateUi on ShareTemplate {
-  Size get pixelSize => const Size(1080, 1920); // 9:16 (TikTok + IG Stories)
+  // Use a lighter render size to avoid UI stalls on mid/low devices.
+  // Most social apps accept this and upscale if needed.
+  Size get pixelSize => const Size(720, 1280); // 9:16
 }
 
 class ResultsShareService {
@@ -223,7 +225,12 @@ class ResultsShareService {
     };
     try {
       final ByteData data = await rootBundle.load(asset);
-      final ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+      // Decode at target size for performance.
+      final ui.Codec codec = await ui.instantiateImageCodec(
+        data.buffer.asUint8List(),
+        targetWidth: 720,
+        targetHeight: 1280,
+      );
       final ui.FrameInfo frame = await codec.getNextFrame();
       return frame.image;
     } catch (_) {
