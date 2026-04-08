@@ -68,6 +68,7 @@ class ResultsShareService {
     final Canvas canvas = Canvas(recorder);
 
     final ui.Image? bg = await _loadTemplate(template);
+    final bool hasTemplate = bg != null;
     if (bg != null) {
       final Rect dst = Offset.zero & size;
       final Rect src = Rect.fromLTWH(0, 0, bg.width.toDouble(), bg.height.toDouble());
@@ -102,19 +103,7 @@ class ResultsShareService {
 
     // Coordinates tuned for 1080x1920 templates.
     final double left = 150;
-    double y = 290;
-
-    _tp(
-      canvas,
-      text: 'NEONPULSE',
-      at: Offset(left, y),
-      style: TextStyle(
-        color: Colors.white.withValues(alpha: 0.95),
-        fontSize: 54,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 6,
-      ),
-    );
+    double y = 160;
 
     final TextStyle pillStyle = TextStyle(
       color: accent,
@@ -133,20 +122,22 @@ class ResultsShareService {
         ..color = accent.withValues(alpha: 0.85),
     );
     _tp(canvas, text: platform, at: Offset(pill.left + 13, pill.top + 10), style: pillStyle);
-    y += 120;
+    y += 140;
 
-    _tp(
-      canvas,
-      text: l10n.resultsFinalScore,
-      at: Offset(left, y),
-      style: const TextStyle(
-        color: Color(0xB3FFFFFF),
-        fontSize: 34,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 1.6,
-      ),
-    );
-    y += 50;
+    if (!hasTemplate) {
+      _tp(
+        canvas,
+        text: l10n.resultsFinalScore,
+        at: Offset(left, y),
+        style: const TextStyle(
+          color: Color(0xB3FFFFFF),
+          fontSize: 34,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.6,
+        ),
+      );
+      y += 50;
+    }
 
     _tp(
       canvas,
@@ -154,30 +145,44 @@ class ResultsShareService {
       at: Offset(left, y),
       style: TextStyle(
         color: accent.withValues(alpha: 0.95),
-        fontSize: 140,
+        fontSize: 132,
         fontWeight: FontWeight.w900,
         letterSpacing: 2.0,
         shadows: <Shadow>[Shadow(color: accent.withValues(alpha: 0.35), blurRadius: 10)],
       ),
     );
-    y += 170;
+    y += 160;
 
+    // Stats box area (template provides the containers).
     y = _kv(canvas, size.width, left, y, l10n.resultsBestCombo, 'x${result.bestCombo}', accent);
-    y = _kv(canvas, size.width, left, y + 10, l10n.resultsAccuracy, '${result.breakdown.accuracyPercent.toStringAsFixed(1)}%', accent);
+    y = _kv(
+      canvas,
+      size.width,
+      left,
+      y + 12,
+      l10n.resultsAccuracy,
+      '${result.breakdown.accuracyPercent.toStringAsFixed(1)}%',
+      accent,
+    );
 
     y += 38;
-    _tp(
-      canvas,
-      text: l10n.resultsHitBreakdown,
-      at: Offset(left, y),
-      style: const TextStyle(
-        color: Color(0xB3FFFFFF),
-        fontSize: 30,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 1.2,
-      ),
-    );
-    y += 42;
+    if (!hasTemplate) {
+      _tp(
+        canvas,
+        text: l10n.resultsHitBreakdown,
+        at: Offset(left, y),
+        style: const TextStyle(
+          color: Color(0xB3FFFFFF),
+          fontSize: 30,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.2,
+        ),
+      );
+      y += 42;
+    } else {
+      // Template already says BREAKDOWN; align values a bit below it.
+      y += 54;
+    }
 
     _tp(
       canvas,
@@ -185,25 +190,27 @@ class ResultsShareService {
       at: Offset(left, y),
       style: TextStyle(
         color: Colors.white.withValues(alpha: 0.92),
-        fontSize: 44,
+        fontSize: 42,
         fontWeight: FontWeight.w900,
         letterSpacing: 1.0,
       ),
     );
 
-    _tp(
-      canvas,
-      text: l10n.resultsShareFooter,
-      at: Offset(left, size.height - 240),
-      style: const TextStyle(
-        color: Color(0x99FFFFFF),
-        fontSize: 30,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.6,
-      ),
-      maxWidth: size.width - 300,
-      align: TextAlign.center,
-    );
+    if (!hasTemplate) {
+      _tp(
+        canvas,
+        text: l10n.resultsShareFooter,
+        at: Offset(left, size.height - 240),
+        style: const TextStyle(
+          color: Color(0x99FFFFFF),
+          fontSize: 30,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.6,
+        ),
+        maxWidth: size.width - 300,
+        align: TextAlign.center,
+      );
+    }
 
     final ui.Picture pic = recorder.endRecording();
     return pic.toImage(size.width.toInt(), size.height.toInt());
