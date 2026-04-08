@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -67,21 +67,29 @@ class ResultsShareService {
     final ui.PictureRecorder recorder = ui.PictureRecorder();
     final Canvas canvas = Canvas(recorder);
 
-    final Rect rect = Offset.zero & size;
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = ui.Gradient.linear(
-          const Offset(0, 0),
-          Offset(0, size.height),
-          <Color>[
-            const Color(0xFF0B0D1C),
-            const Color(0xFF0C1024),
-            const Color(0xFF12002A),
-          ],
-          <double>[0.0, 0.55, 1.0],
-        ),
-    );
+    final ui.Image? bg = await _loadTemplate(template);
+    if (bg != null) {
+      final Rect dst = Offset.zero & size;
+      final Rect src = Rect.fromLTWH(0, 0, bg.width.toDouble(), bg.height.toDouble());
+      canvas.drawImageRect(bg, src, dst, Paint());
+    } else {
+      // Fallback background (keeps sharing usable until templates are provided).
+      final Rect rect = Offset.zero & size;
+      canvas.drawRect(
+        rect,
+        Paint()
+          ..shader = ui.Gradient.linear(
+            const Offset(0, 0),
+            Offset(0, size.height),
+            <Color>[
+              const Color(0xFF0B0D1C),
+              const Color(0xFF0C1024),
+              const Color(0xFF12002A),
+            ],
+            <double>[0.0, 0.55, 1.0],
+          ),
+      );
+    }
 
     final Color accent = switch (template) {
       ShareTemplate.tiktok => const Color(0xFF25F4EE),
@@ -92,20 +100,9 @@ class ResultsShareService {
       ShareTemplate.instagram => l10n.sharePlatformInstagram,
     };
 
-    final Rect card = Rect.fromLTWH(90, 190, size.width - 180, size.height - 380);
-    final RRect rr = RRect.fromRectAndRadius(card, const Radius.circular(56));
-    canvas.drawRRect(rr, Paint()..color = const Color(0x33000000));
-    canvas.drawRRect(
-      rr,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 4
-        ..color = accent.withValues(alpha: 0.80),
-    );
-    // Avoid heavy blur here (can cause noticeable UI stalls on some devices).
-
-    final double left = card.left + 60;
-    double y = card.top + 70;
+    // Coordinates tuned for 1080x1920 templates.
+    final double left = 150;
+    double y = 290;
 
     _tp(
       canvas,
@@ -126,7 +123,7 @@ class ResultsShareService {
       letterSpacing: 2,
     );
     final Size pillText = _measure(platform, pillStyle);
-    final Rect pill = Rect.fromLTWH(card.right - pillText.width - 60 - 26, y + 4, pillText.width + 26, 44);
+    final Rect pill = Rect.fromLTWH(size.width - 150 - pillText.width - 26, y + 6, pillText.width + 26, 44);
     canvas.drawRRect(RRect.fromRectAndRadius(pill, const Radius.circular(999)), Paint()..color = accent.withValues(alpha: 0.16));
     canvas.drawRRect(
       RRect.fromRectAndRadius(pill, const Radius.circular(999)),
@@ -197,19 +194,34 @@ class ResultsShareService {
     _tp(
       canvas,
       text: l10n.resultsShareFooter,
-      at: Offset(card.left + 60, card.bottom - 90),
+      at: Offset(left, size.height - 240),
       style: const TextStyle(
         color: Color(0x99FFFFFF),
         fontSize: 30,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.6,
       ),
-      maxWidth: card.width - 120,
+      maxWidth: size.width - 300,
       align: TextAlign.center,
     );
 
     final ui.Picture pic = recorder.endRecording();
     return pic.toImage(size.width.toInt(), size.height.toInt());
+  }
+
+  static Future<ui.Image?> _loadTemplate(ShareTemplate template) async {
+    final String asset = switch (template) {
+      ShareTemplate.tiktok => 'assets/branding/share_templates/share_tiktok_1080x1920.png',
+      ShareTemplate.instagram => 'assets/branding/share_templates/share_instagram_1080x1920.png',
+    };
+    try {
+      final ByteData data = await rootBundle.load(asset);
+      final ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+      final ui.FrameInfo frame = await codec.getNextFrame();
+      return frame.image;
+    } catch (_) {
+      return null;
+    }
   }
 }
 

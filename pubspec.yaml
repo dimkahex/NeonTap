@@ -46,6 +46,7 @@ flutter:
     - assets/sfx/
     - assets/music/
     - assets/branding/
+    - assets/branding/share_templates/
 
 flutter_launcher_icons:
   android: true
