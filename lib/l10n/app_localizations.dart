@@ -536,6 +536,18 @@ abstract class AppLocalizations {
   /// **'CHALLENGES'**
   String get versusTitle;
 
+  /// No description provided for @versusHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHALLENGE HISTORY'**
+  String get versusHistoryTitle;
+
+  /// No description provided for @versusHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No history yet.\nCreate a challenge — it will appear here after it ends.'**
+  String get versusHistoryEmpty;
+
   /// No description provided for @versusHeadline.
   ///
   /// In en, this message translates to:

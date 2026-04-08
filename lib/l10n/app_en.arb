@@ -112,6 +112,8 @@
   "profileLanguageRu": "Русский",
   "profileLanguageEn": "English",
   "versusTitle": "CHALLENGES",
+  "versusHistoryTitle": "CHALLENGE HISTORY",
+  "versusHistoryEmpty": "No history yet.\nCreate a challenge — it will appear here after it ends.",
   "versusHeadline": "CHALLENGE MODE",
   "versusBody": "Send a challenge to a friend for 1h, 6h, or 24h.\nWithin the time window, both of you play — only your best run counts.\n\nWhile a challenge is active, a countdown appears on the main menu.",
   "versusOpenChallenges": "OPEN CHALLENGES",

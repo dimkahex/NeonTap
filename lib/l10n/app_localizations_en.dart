@@ -253,6 +253,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get versusTitle => 'CHALLENGES';
 
   @override
+  String get versusHistoryTitle => 'CHALLENGE HISTORY';
+
+  @override
+  String get versusHistoryEmpty =>
+      'No history yet.\nCreate a challenge — it will appear here after it ends.';
+
+  @override
   String get versusHeadline => 'CHALLENGE MODE';
 
   @override

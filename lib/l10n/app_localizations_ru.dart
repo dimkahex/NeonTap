@@ -253,6 +253,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get versusTitle => 'ВЫЗОВЫ';
 
   @override
+  String get versusHistoryTitle => 'ИСТОРИЯ ВЫЗОВОВ';
+
+  @override
+  String get versusHistoryEmpty =>
+      'История пока пуста.\nСоздайте вызов — он появится здесь после завершения.';
+
+  @override
   String get versusHeadline => 'РЕЖИМ ВЫЗОВОВ';
 
   @override
