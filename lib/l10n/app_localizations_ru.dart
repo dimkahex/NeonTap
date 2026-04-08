@@ -137,6 +137,27 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get resultsSharePickPlatform => 'Куда поделиться?';
+
+  @override
+  String get resultsShareHintFormats =>
+      'Будет создана вертикальная картинка 9:16 — идеально для TikTok и Stories.';
+
+  @override
+  String get resultsShareFooter => 'Сыграй и побей мой результат';
+
+  @override
+  String resultsShareText(int score) {
+    return 'Мой результат в NeonPulse: $score';
+  }
+
+  @override
+  String get sharePlatformTikTok => 'TIKTOK';
+
+  @override
+  String get sharePlatformInstagram => 'INSTAGRAM';
+
+  @override
   String get resultsMenu => 'МЕНЮ';
 
   @override
