@@ -44,11 +44,6 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: kFirebaseOnlineFeaturesEnabled ? _openCreateChallenge : null,
-        icon: const Icon(Icons.add),
-        label: Text(l10n.challengesMakeChallenge),
-      ),
       body: NeonBackground(
         child: !kFirebaseOnlineFeaturesEnabled
             ? Center(
