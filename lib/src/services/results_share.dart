@@ -220,12 +220,17 @@ class ResultsShareService {
 
   static Future<ui.Image?> _loadTemplate(ShareTemplate template) async {
     final String asset = switch (template) {
-      ShareTemplate.tiktok => 'assets/branding/share_templates/share_tiktok_720x1280.png',
-      ShareTemplate.instagram => 'assets/branding/share_templates/share_instagram_720x1280.png',
+      ShareTemplate.tiktok => 'assets/branding/share_templates/share_tiktok_1080x1920.png',
+      ShareTemplate.instagram => 'assets/branding/share_templates/share_instagram_1080x1920.png',
     };
     try {
       final ByteData data = await rootBundle.load(asset);
-      final ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+      // Decode at target size for performance.
+      final ui.Codec codec = await ui.instantiateImageCodec(
+        data.buffer.asUint8List(),
+        targetWidth: 720,
+        targetHeight: 1280,
+      );
       final ui.FrameInfo frame = await codec.getNextFrame();
       return frame.image;
     } catch (_) {
