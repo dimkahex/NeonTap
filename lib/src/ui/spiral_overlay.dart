@@ -199,7 +199,9 @@ class _HypnoticSpiralPainter extends CustomPainter {
       Paint()..color = const Color(0xFF020308),
     );
 
-    final int steps = (160 + 110 * intensity + tier * 22 + (progression * 55).round()).clamp(120, 340).round();
+    // 90Hz-friendly: keep the spiral smooth but cheaper per frame.
+    // We rely on stroke width + glow to mask lower segment count.
+    final int steps = (140 + 80 * intensity + tier * 16 + (progression * 40).round()).clamp(100, 260).round();
     final double twist = rot * (1.12 + v * 0.15 + progression * 0.22);
 
     final Paint seg = Paint()
@@ -209,20 +211,25 @@ class _HypnoticSpiralPainter extends CustomPainter {
     final double strokeBoost = 1.0 + progression * 0.55 + (stage / 14) * 0.2;
     final double alphaBoost = 0.08 * progression + 0.04 * (stage / 14);
 
+    // Avoid per-segment sin/cos for the spiral geometry by stepping angle iteratively.
+    final double dTh = thetaMax / steps;
+    final double cosD = math.cos(dTh);
+    final double sinD = math.sin(dTh);
+    final double dr = b * dTh;
+
+    double th0 = 0.0;
+    double r0 = a;
+    double cosA = math.cos(twist);
+    double sinA = math.sin(twist);
+
     for (int i = 0; i < steps; i++) {
-      final double t0 = i / steps;
-      final double t1 = (i + 1) / steps;
-      final double th0 = thetaMax * t0;
-      final double th1 = thetaMax * t1;
+      final double th1 = th0 + dTh;
+      final double r1 = r0 + dr;
+      final double cosA1 = cosA * cosD - sinA * sinD;
+      final double sinA1 = sinA * cosD + cosA * sinD;
 
-      final double r0 = a + b * th0;
-      final double r1 = a + b * th1;
-
-      final double ang0 = th0 + twist;
-      final double ang1 = th1 + twist;
-
-      final Offset p0 = c + Offset(math.cos(ang0), math.sin(ang0)) * r0;
-      final Offset p1 = c + Offset(math.cos(ang1), math.sin(ang1)) * r1;
+      final Offset p0 = c + Offset(cosA, sinA) * r0;
+      final Offset p1 = c + Offset(cosA1, sinA1) * r1;
 
       final double bandPhase = (th0 / (math.pi * 0.42)) + phase * 6.2 + tier * 1.7 + ripplePhase * 4.2;
       final bool darkBand = (bandPhase.floor() & 1) == 0;
@@ -240,6 +247,11 @@ class _HypnoticSpiralPainter extends CustomPainter {
         ..strokeWidth =
             (2.0 + 2.4 * intensity + tier * 0.28 + progression * 1.6) * (darkBand ? 0.85 : 1.05) * strokeBoost;
       canvas.drawLine(p0, p1, seg);
+
+      th0 = th1;
+      r0 = r1;
+      cosA = cosA1;
+      sinA = sinA1;
     }
 
     final Paint glowPaint = Paint()
