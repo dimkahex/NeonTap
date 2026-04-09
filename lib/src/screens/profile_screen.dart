@@ -2,6 +2,8 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../config/online_config.dart';
@@ -31,6 +33,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _lastSavedName = '';
   bool _savingName = false;
   DateTime? _savedAt;
+  bool _firebaseDiagBusy = false;
+
+  Future<void> _firebaseTestWrite() async {
+    if (_firebaseDiagBusy) return;
+    setState(() => _firebaseDiagBusy = true);
+    try {
+      await LeaderboardService.ensureReady();
+      final String? uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) {
+        LeaderboardService.status.value = 'Firebase: no currentUser after ensureReady()';
+        return;
+      }
+      final DatabaseReference ref = FirebaseDatabase.instance.ref('debug/ping/$uid');
+      await ref
+          .set(<String, Object?>{
+            'ts': ServerValue.timestamp,
+            'platform': 'android',
+          })
+          .timeout(const Duration(seconds: 6));
+      LeaderboardService.status.value = null;
+    } catch (e) {
+      LeaderboardService.status.value = 'Firebase test write failed: $e';
+    } finally {
+      if (mounted) setState(() => _firebaseDiagBusy = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -208,6 +236,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                   const SizedBox(height: 28),
+                  if (kFirebaseOnlineFeaturesEnabled) ...<Widget>[
+                    Text(
+                      'FIREBASE',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            letterSpacing: 1.2,
+                            color: Colors.white70,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    ValueListenableBuilder<String?>(
+                      valueListenable: LeaderboardService.status,
+                      builder: (BuildContext context, String? status, _) {
+                        final String uid = FirebaseAuth.instance.currentUser?.uid ?? '—';
+                        return Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFF35E6FF), width: 1.1),
+                            color: Colors.black.withValues(alpha: 0.18),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: <Widget>[
+                              Text(
+                                'UID: $uid',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                              ),
+                              if (status != null && status.trim().isNotEmpty) ...<Widget>[
+                                const SizedBox(height: 8),
+                                Text(
+                                  status,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+                                ),
+                              ],
+                              const SizedBox(height: 10),
+                              ElevatedButton(
+                                onPressed: _firebaseDiagBusy ? null : () => unawaited(_firebaseTestWrite()),
+                                child: _firebaseDiagBusy
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Text('ТЕСТ ЗАПИСИ В БАЗУ'),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'После нажатия проверь в RTDB путь debug/ping/<UID> — должен появиться ts.',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 28),
+                  ],
                   Text(
                     l10n.profileYourFriendCode,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
