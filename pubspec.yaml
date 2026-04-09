@@ -21,6 +21,7 @@ dependencies:
   shared_preferences: ^2.2.3
   audioplayers: ^6.0.0
   share_plus: ^11.1.0
+  path_provider: ^2.1.4
 
   # Online foundation (Phase 1: guest auth only).
   firebase_core: ^3.1.1
@@ -45,6 +46,7 @@ flutter:
     - assets/sfx/
     - assets/music/
     - assets/branding/
+    - assets/branding/share_templates/
 
 flutter_launcher_icons:
   android: true

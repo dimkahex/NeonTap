@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../l10n/app_localizations.dart';
 import '../game/run_result.dart';
 import '../game/run_stats.dart';
+import '../services/results_share.dart';
 import '../ui/neon_background.dart';
 import 'game_screen.dart';
 import 'main_menu_screen.dart';
@@ -86,7 +87,7 @@ class ResultsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               ElevatedButton(
-                onPressed: () => unawaited(_shareTextOnly(context, r)),
+                onPressed: () => _openShareSheet(context, r),
                 child: Text(l10n.resultsShare),
               ),
               const SizedBox(height: 12),
@@ -106,9 +107,125 @@ String _breakdownLine(AppLocalizations l10n, JudgementBreakdown b) {
   return l10n.resultsBreakdown(b.perfect, b.cool, b.good, b.ok);
 }
 
-Future<void> _shareTextOnly(BuildContext context, RunResult r) async {
+Future<void> _openShareSheet(BuildContext context, RunResult r) async {
   final AppLocalizations l10n = AppLocalizations.of(context)!;
-  await SharePlus.instance.share(ShareParams(text: l10n.resultsShareSnackbar(r.score)));
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: const Color(0xFF0C1024),
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+    builder: (BuildContext ctx) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                l10n.resultsSharePickPlatform,
+                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8,
+                      color: Colors.white.withValues(alpha: 0.92),
+                    ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        unawaited(_shareWithLoader(context, r, ShareTemplate.tiktok));
+                      },
+                      child: Text(l10n.sharePlatformTikTok),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        unawaited(_shareWithLoader(context, r, ShareTemplate.instagram));
+                      },
+                      child: Text(l10n.sharePlatformInstagram),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                l10n.resultsShareHintFormats,
+                textAlign: TextAlign.center,
+                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: Colors.white54),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _shareWithLoader(BuildContext context, RunResult r, ShareTemplate template) async {
+  final AppLocalizations l10n = AppLocalizations.of(context)!;
+  final BuildContext rootContext = context;
+  final NavigatorState nav = Navigator.of(rootContext, rootNavigator: true);
+  final ScaffoldMessengerState messenger = ScaffoldMessenger.of(rootContext);
+
+  showDialog<void>(
+    context: rootContext,
+    barrierDismissible: false,
+    builder: (BuildContext d) {
+      return Dialog(
+        backgroundColor: const Color(0xFF0C1024),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: const Color(0xFF35E6FF).withValues(alpha: 0.35), width: 1.2),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+          child: Row(
+            children: <Widget>[
+              const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  l10n.resultsSharePreparing,
+                  style: Theme.of(d).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+
+  try {
+    await Future<void>.delayed(const Duration(milliseconds: 16));
+    final XFile file = await ResultsShareService.prepareShareFile(
+      context: rootContext,
+      result: r,
+      template: template,
+    ).timeout(const Duration(seconds: 10));
+
+    if (!rootContext.mounted) return;
+    nav.pop();
+    unawaited(ResultsShareService.sharePrepared(context: rootContext, result: r, file: file));
+  } catch (_) {
+    if (!rootContext.mounted) return;
+    nav.maybePop();
+    messenger.showSnackBar(SnackBar(content: Text(l10n.resultsShareFailed)));
+  }
 }
 
 class _StatTile extends StatelessWidget {
