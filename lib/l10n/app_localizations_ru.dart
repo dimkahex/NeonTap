@@ -144,13 +144,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Будет создана вертикальная картинка 9:16 — идеально для TikTok и Stories.';
 
   @override
-  String get resultsSharePreparing => 'Готовим картинку…';
-
-  @override
-  String get resultsShareFailed =>
-      'Не удалось подготовить картинку для шаринга';
-
-  @override
   String get resultsShareFooter => 'Сыграй и побей мой результат';
 
   @override
