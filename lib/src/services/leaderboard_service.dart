@@ -14,6 +14,7 @@ class LeaderboardService {
 
   /// Last Firebase / RTDB issue (null when healthy).
   static final ValueNotifier<String?> status = ValueNotifier<String?>(null);
+  static const Duration _kOpTimeout = Duration(seconds: 6);
 
   static bool get _firebaseReady {
     try {
@@ -62,7 +63,12 @@ class LeaderboardService {
     if (!kFirebaseOnlineFeaturesEnabled) {
       return;
     }
-    await _ensureAuth();
+    try {
+      await _ensureAuth().timeout(_kOpTimeout);
+    } catch (e) {
+      status.value = 'Firebase init/auth timed out: $e';
+      return;
+    }
     if (!_firebaseReady) {
       return;
     }
@@ -72,18 +78,26 @@ class LeaderboardService {
     }
     final String displayName = await PlayerPrefs.getDisplayName();
     final DatabaseReference ref = FirebaseDatabase.instance.ref('leaderboard/global/$uid');
-    final DataSnapshot snap = await ref.get();
+    DataSnapshot snap;
+    try {
+      snap = await ref.get().timeout(_kOpTimeout);
+    } catch (e) {
+      status.value = 'RTDB read failed: $e';
+      return;
+    }
     final int prev = _readScore(snap);
     if (bestScore <= prev) {
       return;
     }
     try {
-      await ref.set(<String, Object?>{
+      await ref
+          .set(<String, Object?>{
         'displayName': displayName,
         'score': bestScore,
         'bestCombo': bestCombo,
         'updatedAt': ServerValue.timestamp,
-      });
+      })
+          .timeout(_kOpTimeout);
       status.value = null;
     } catch (e) {
       status.value = 'RTDB write failed: $e';
@@ -173,7 +187,7 @@ class LeaderboardService {
       return;
     }
     try {
-      await _ensureAuth().timeout(const Duration(seconds: 6));
+      await _ensureAuth().timeout(_kOpTimeout);
     } catch (e) {
       status.value = 'Firebase init/auth timed out: $e';
       return;
@@ -188,7 +202,7 @@ class LeaderboardService {
     final DatabaseReference ref = FirebaseDatabase.instance.ref('leaderboard/global/$uid');
     DataSnapshot snap;
     try {
-      snap = await ref.get().timeout(const Duration(seconds: 6));
+      snap = await ref.get().timeout(_kOpTimeout);
     } catch (e) {
       status.value = 'RTDB read failed: $e';
       return;
@@ -204,7 +218,7 @@ class LeaderboardService {
               'bestCombo': bestCombo,
               'updatedAt': ServerValue.timestamp,
             })
-            .timeout(const Duration(seconds: 6));
+            .timeout(_kOpTimeout);
         status.value = null;
       } catch (e) {
         status.value = 'RTDB write failed: $e';
@@ -217,7 +231,7 @@ class LeaderboardService {
             'displayName': dn,
             'updatedAt': ServerValue.timestamp,
           })
-          .timeout(const Duration(seconds: 6));
+          .timeout(_kOpTimeout);
       status.value = null;
     } catch (e) {
       status.value = 'RTDB write failed: $e';
