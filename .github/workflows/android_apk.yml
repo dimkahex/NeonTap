@@ -40,13 +40,21 @@ jobs:
 
       # Firebase Android requires google-services.json at android/app/ (CI placeholder until you add a real file from Firebase Console).
       - name: Ensure Android platform + Firebase config
+        env:
+          FIREBASE_GOOGLE_SERVICES_JSON_B64: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_B64 }}
         run: |
           set -e
           if [ ! -d "android" ]; then
             flutter create --platforms=android --org com.neonpulse --project-name neon_pulse_online .
           fi
           mkdir -p android/app
-          cp ci/android-placeholders/google-services.json android/app/google-services.json
+          if [ -n "${FIREBASE_GOOGLE_SERVICES_JSON_B64:-}" ]; then
+            echo "${FIREBASE_GOOGLE_SERVICES_JSON_B64}" | base64 --decode > android/app/google-services.json
+            echo "Using google-services.json from GitHub Secret (FIREBASE_GOOGLE_SERVICES_JSON_B64)"
+          else
+            cp ci/android-placeholders/google-services.json android/app/google-services.json
+            echo "Using placeholder google-services.json (no secret configured)"
+          fi
           python3 ci/patch_android_firebase_gradle.py
 
       - name: Debug Gradle snippets (after patch)
