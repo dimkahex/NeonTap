@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 import '../config/online_config.dart';
+import '../firebase/firebase_bootstrap.dart';
 import '../models/challenge.dart';
 import 'friends_service.dart';
 import 'player_prefs.dart';
@@ -60,7 +61,7 @@ class ChallengeService {
     final int createdAt = _nowMs();
     final int endsAt = createdAt + duration.duration.inMilliseconds;
 
-    final DatabaseReference ref = FirebaseDatabase.instance.ref('challenges').push();
+    final DatabaseReference ref = FirebaseBootstrap.db.ref('challenges').push();
     final String id = ref.key!;
     final Challenge c = Challenge(
       id: id,
@@ -96,7 +97,7 @@ class ChallengeService {
 
     if (!_ready) return;
     final String me = _myUid!;
-    final Query q = FirebaseDatabase.instance.ref('challenges').orderByChild('createdAtMs').limitToLast(200);
+    final Query q = FirebaseBootstrap.db.ref('challenges').orderByChild('createdAtMs').limitToLast(200);
     try {
       await for (final DatabaseEvent event in q.onValue) {
         final Object? raw = event.snapshot.value;
@@ -123,11 +124,11 @@ class ChallengeService {
     await _ensureAuth();
     if (!_ready) return;
     final String me = _myUid!;
-    final DataSnapshot snap = await FirebaseDatabase.instance.ref('challenges/$challengeId').get();
+    final DataSnapshot snap = await FirebaseBootstrap.db.ref('challenges/$challengeId').get();
     if (!snap.exists || snap.value is! Map) return;
     final Challenge c = Challenge.fromMap(challengeId, Map<Object?, Object?>.from(snap.value! as Map));
     if (c.status != ChallengeStatus.pending || me != c.toUid) return;
-    await FirebaseDatabase.instance.ref('challenges/$challengeId').update(<String, Object?>{
+    await FirebaseBootstrap.db.ref('challenges/$challengeId').update(<String, Object?>{
       'status': ChallengeStatus.active.name,
     });
   }
@@ -136,11 +137,11 @@ class ChallengeService {
     await _ensureAuth();
     if (!_ready) return;
     final String me = _myUid!;
-    final DataSnapshot snap = await FirebaseDatabase.instance.ref('challenges/$challengeId').get();
+    final DataSnapshot snap = await FirebaseBootstrap.db.ref('challenges/$challengeId').get();
     if (!snap.exists || snap.value is! Map) return;
     final Challenge c = Challenge.fromMap(challengeId, Map<Object?, Object?>.from(snap.value! as Map));
     if (c.status != ChallengeStatus.pending || me != c.toUid) return;
-    await FirebaseDatabase.instance.ref('challenges/$challengeId').update(<String, Object?>{
+    await FirebaseBootstrap.db.ref('challenges/$challengeId').update(<String, Object?>{
       'status': ChallengeStatus.declined.name,
     });
   }
@@ -149,11 +150,11 @@ class ChallengeService {
     await _ensureAuth();
     if (!_ready) return;
     final String me = _myUid!;
-    final DataSnapshot snap = await FirebaseDatabase.instance.ref('challenges/$challengeId').get();
+    final DataSnapshot snap = await FirebaseBootstrap.db.ref('challenges/$challengeId').get();
     if (!snap.exists || snap.value is! Map) return;
     final Challenge c = Challenge.fromMap(challengeId, Map<Object?, Object?>.from(snap.value! as Map));
     if (c.status != ChallengeStatus.pending || me != c.fromUid) return;
-    await FirebaseDatabase.instance.ref('challenges/$challengeId').update(<String, Object?>{
+    await FirebaseBootstrap.db.ref('challenges/$challengeId').update(<String, Object?>{
       'status': ChallengeStatus.cancelled.name,
     });
   }
@@ -162,7 +163,7 @@ class ChallengeService {
     await _ensureAuth();
     if (!_ready) return;
     final String me = _myUid!;
-    final DatabaseReference ref = FirebaseDatabase.instance.ref('challenges/$challengeId');
+    final DatabaseReference ref = FirebaseBootstrap.db.ref('challenges/$challengeId');
     final DataSnapshot snap = await ref.get();
     if (!snap.exists || snap.value is! Map) return;
     final Challenge c = Challenge.fromMap(challengeId, Map<Object?, Object?>.from(snap.value! as Map));
@@ -186,7 +187,7 @@ class ChallengeService {
     final String me = _myUid!;
     final int now = _nowMs();
 
-    final DataSnapshot snap = await FirebaseDatabase.instance.ref('challenges').get();
+    final DataSnapshot snap = await FirebaseBootstrap.db.ref('challenges').get();
     if (!snap.exists || snap.value is! Map) return;
     final Map<Object?, Object?> all = snap.value! as Map<Object?, Object?>;
 
@@ -197,13 +198,13 @@ class ChallengeService {
       if (!c.involves(me)) continue;
       if (c.status != ChallengeStatus.active) continue;
       if (now >= c.endsAtMs) {
-        await FirebaseDatabase.instance.ref('challenges/$id').update(<String, Object?>{
+        await FirebaseBootstrap.db.ref('challenges/$id').update(<String, Object?>{
           'status': ChallengeStatus.completed.name,
         });
         continue;
       }
 
-      final DatabaseReference ref = FirebaseDatabase.instance.ref('challenges/$id');
+      final DatabaseReference ref = FirebaseBootstrap.db.ref('challenges/$id');
       if (me == c.fromUid) {
         final bool risk = c.fromRiskArmed && !c.fromRiskUsed;
         final int challengeScore = risk ? applyRiskScore(rawScore: score) : score;

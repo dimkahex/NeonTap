@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../config/online_config.dart';
 import '../models/leaderboard_entry.dart';
+import '../firebase/firebase_bootstrap.dart';
 import 'local_stats.dart';
 import 'player_prefs.dart';
 
@@ -77,7 +78,7 @@ class LeaderboardService {
       return;
     }
     final String displayName = await PlayerPrefs.getDisplayName();
-    final DatabaseReference ref = FirebaseDatabase.instance.ref('leaderboard/global/$uid');
+    final DatabaseReference ref = FirebaseBootstrap.db.ref('leaderboard/global/$uid');
     DataSnapshot snap;
     try {
       snap = await ref.get().timeout(_kOpTimeout);
@@ -145,7 +146,7 @@ class LeaderboardService {
       yield await loadLocalGlobalLeaderboard();
       return;
     }
-    final Query q = FirebaseDatabase.instance
+    final Query q = FirebaseBootstrap.db
         .ref('leaderboard/global')
         .orderByChild('score')
         .limitToLast(limit);
@@ -199,7 +200,7 @@ class LeaderboardService {
     if (uid == null) {
       return;
     }
-    final DatabaseReference ref = FirebaseDatabase.instance.ref('leaderboard/global/$uid');
+    final DatabaseReference ref = FirebaseBootstrap.db.ref('leaderboard/global/$uid');
     DataSnapshot snap;
     try {
       snap = await ref.get().timeout(_kOpTimeout);

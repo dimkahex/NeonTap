@@ -7,6 +7,7 @@ import 'package:firebase_database/firebase_database.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../config/online_config.dart';
+import '../firebase/firebase_bootstrap.dart';
 import '../services/friends_service.dart';
 import '../services/leaderboard_service.dart';
 import '../l10n_ext/friend_add_error_l10n.dart';
@@ -45,7 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         LeaderboardService.status.value = 'Firebase: no currentUser after ensureReady()';
         return;
       }
-      final DatabaseReference ref = FirebaseDatabase.instance.ref('debug/ping/$uid');
+      final DatabaseReference ref = FirebaseBootstrap.db.ref('debug/ping/$uid');
       await ref
           .set(<String, Object?>{
             'ts': ServerValue.timestamp,

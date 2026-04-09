@@ -6,6 +6,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 
 import '../config/online_config.dart';
+import '../firebase/firebase_bootstrap.dart';
 import '../models/leaderboard_entry.dart';
 import 'leaderboard_service.dart';
 import 'share_code_local.dart';
@@ -64,7 +65,7 @@ class FriendsService {
         return local;
       }
       final String uid = _myUid!;
-      final DatabaseReference mine = FirebaseDatabase.instance.ref('users/$uid/friendCode');
+      final DatabaseReference mine = FirebaseBootstrap.db.ref('users/$uid/friendCode');
       final DataSnapshot existing = await mine.get().timeout(_kOpTimeout);
       if (existing.exists && existing.value is String) {
         final String s = (existing.value! as String).trim().toUpperCase();
@@ -75,7 +76,7 @@ class FriendsService {
       }
 
       // Prefer registering the same code as on device (stable across reinstall if prefs kept).
-      final DatabaseReference localRef = FirebaseDatabase.instance.ref('friendCodes/$local');
+      final DatabaseReference localRef = FirebaseBootstrap.db.ref('friendCodes/$local');
       final DataSnapshot taken = await localRef.get().timeout(_kOpTimeout);
       if (!taken.exists) {
         await localRef.set(<String, String>{'uid': uid}).timeout(_kOpTimeout);
@@ -99,7 +100,7 @@ class FriendsService {
           6,
           (_) => _chars[rnd.nextInt(_chars.length)],
         ).join();
-        final DatabaseReference codeRef = FirebaseDatabase.instance.ref('friendCodes/$code');
+        final DatabaseReference codeRef = FirebaseBootstrap.db.ref('friendCodes/$code');
         final DataSnapshot snap = await codeRef.get().timeout(_kOpTimeout);
         if (snap.exists) {
           continue;
@@ -133,7 +134,7 @@ class FriendsService {
     if (code.length != 6) {
       return FriendAddError.invalidLength;
     }
-    final DataSnapshot snap = await FirebaseDatabase.instance.ref('friendCodes/$code').get().timeout(_kOpTimeout);
+    final DataSnapshot snap = await FirebaseBootstrap.db.ref('friendCodes/$code').get().timeout(_kOpTimeout);
     if (!snap.exists || snap.value is! Map) {
       return FriendAddError.notFound;
     }
@@ -145,7 +146,7 @@ class FriendsService {
     if (friendUid == myUid) {
       return FriendAddError.ownCode;
     }
-    await FirebaseDatabase.instance.ref('users/$myUid/friends/$friendUid').set(true).timeout(_kOpTimeout);
+    await FirebaseBootstrap.db.ref('users/$myUid/friends/$friendUid').set(true).timeout(_kOpTimeout);
     return null;
   }
 
@@ -157,7 +158,7 @@ class FriendsService {
     if (!_ready) {
       return null;
     }
-    final DataSnapshot snap = await FirebaseDatabase.instance.ref('friendCodes/$code').get();
+    final DataSnapshot snap = await FirebaseBootstrap.db.ref('friendCodes/$code').get();
     if (!snap.exists || snap.value is! Map) {
       return null;
     }
@@ -182,7 +183,7 @@ class FriendsService {
       return <String>[];
     }
     final DataSnapshot friendsSnap =
-        await FirebaseDatabase.instance.ref('users/$myUid/friends').get().timeout(_kOpTimeout);
+        await FirebaseBootstrap.db.ref('users/$myUid/friends').get().timeout(_kOpTimeout);
     final List<String> out = <String>[];
     if (friendsSnap.value is Map) {
       final Map<Object?, Object?> fm = friendsSnap.value! as Map<Object?, Object?>;
@@ -204,7 +205,7 @@ class FriendsService {
     if (!_ready || myUid == null) {
       return;
     }
-    await FirebaseDatabase.instance.ref('users/$myUid/friends/$friendUid').remove().timeout(_kOpTimeout);
+    await FirebaseBootstrap.db.ref('users/$myUid/friends/$friendUid').remove().timeout(_kOpTimeout);
   }
 
   /// Имя из `leaderboard/global` для экрана профиля.
@@ -217,7 +218,7 @@ class FriendsService {
       return uid;
     }
     final DataSnapshot snap =
-        await FirebaseDatabase.instance.ref('leaderboard/global/$uid').get().timeout(_kOpTimeout);
+        await FirebaseBootstrap.db.ref('leaderboard/global/$uid').get().timeout(_kOpTimeout);
     if (!snap.exists || snap.value is! Map) {
       return uid;
     }
@@ -244,7 +245,7 @@ class FriendsService {
     }
     final Set<String> uids = <String>{myUid};
     final DataSnapshot friendsSnap =
-        await FirebaseDatabase.instance.ref('users/$myUid/friends').get().timeout(_kOpTimeout);
+        await FirebaseBootstrap.db.ref('users/$myUid/friends').get().timeout(_kOpTimeout);
     if (friendsSnap.value is Map) {
       final Map<Object?, Object?> fm = friendsSnap.value! as Map<Object?, Object?>;
       fm.forEach((Object? k, Object? v) {
@@ -257,7 +258,7 @@ class FriendsService {
     final List<LeaderboardEntry> rows = <LeaderboardEntry>[];
     for (final String id in uids) {
       final DataSnapshot row =
-          await FirebaseDatabase.instance.ref('leaderboard/global/$id').get().timeout(_kOpTimeout);
+          await FirebaseBootstrap.db.ref('leaderboard/global/$id').get().timeout(_kOpTimeout);
       if (row.exists && row.value is Map) {
         final Map<Object?, Object?> vm = Map<Object?, Object?>.from(row.value! as Map);
         rows.add(
