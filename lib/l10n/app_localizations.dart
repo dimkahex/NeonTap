@@ -332,42 +332,6 @@ abstract class AppLocalizations {
   /// **'I scored {score} in NEON PULSE!'**
   String resultsShareSnackbar(int score);
 
-  /// No description provided for @resultsSharePickPlatform.
-  ///
-  /// In en, this message translates to:
-  /// **'Where to share?'**
-  String get resultsSharePickPlatform;
-
-  /// No description provided for @resultsShareHintFormats.
-  ///
-  /// In en, this message translates to:
-  /// **'A vertical 9:16 image will be generated — perfect for TikTok and Stories.'**
-  String get resultsShareHintFormats;
-
-  /// No description provided for @resultsShareFooter.
-  ///
-  /// In en, this message translates to:
-  /// **'Play and beat my score'**
-  String get resultsShareFooter;
-
-  /// No description provided for @resultsShareText.
-  ///
-  /// In en, this message translates to:
-  /// **'My NeonPulse score: {score}'**
-  String resultsShareText(int score);
-
-  /// No description provided for @sharePlatformTikTok.
-  ///
-  /// In en, this message translates to:
-  /// **'TIKTOK'**
-  String get sharePlatformTikTok;
-
-  /// No description provided for @sharePlatformInstagram.
-  ///
-  /// In en, this message translates to:
-  /// **'INSTAGRAM'**
-  String get sharePlatformInstagram;
-
   /// No description provided for @resultsMenu.
   ///
   /// In en, this message translates to:

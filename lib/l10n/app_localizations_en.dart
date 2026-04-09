@@ -137,27 +137,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get resultsSharePickPlatform => 'Where to share?';
-
-  @override
-  String get resultsShareHintFormats =>
-      'A vertical 9:16 image will be generated — perfect for TikTok and Stories.';
-
-  @override
-  String get resultsShareFooter => 'Play and beat my score';
-
-  @override
-  String resultsShareText(int score) {
-    return 'My NeonPulse score: $score';
-  }
-
-  @override
-  String get sharePlatformTikTok => 'TIKTOK';
-
-  @override
-  String get sharePlatformInstagram => 'INSTAGRAM';
-
-  @override
   String get resultsMenu => 'MENU';
 
   @override

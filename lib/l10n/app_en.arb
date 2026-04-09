@@ -63,13 +63,6 @@
       "score": {"type": "int"}
     }
   },
-  "resultsSharePickPlatform": "Where to share?",
-  "resultsShareHintFormats": "A vertical 9:16 image will be generated — perfect for TikTok and Stories.",
-  "resultsShareFooter": "Play and beat my score",
-  "resultsShareText": "My NeonPulse score: {score}",
-  "@resultsShareText": { "placeholders": { "score": { "type": "int" } } },
-  "sharePlatformTikTok": "TIKTOK",
-  "sharePlatformInstagram": "INSTAGRAM",
   "resultsMenu": "MENU",
   "leaderboardTitle": "LEADERBOARD",
   "leaderboardGlobalTab": "GLOBAL",

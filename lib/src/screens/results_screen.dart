@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../game/run_result.dart';
 import '../game/run_stats.dart';
-import '../services/results_share.dart';
 import '../ui/neon_background.dart';
 import 'game_screen.dart';
 import 'main_menu_screen.dart';
@@ -82,7 +81,13 @@ class ResultsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               ElevatedButton(
-                onPressed: () => _openShareSheet(context, r),
+                onPressed: () {
+                  // Phase 1: placeholder share text.
+                  final String text = l10n.resultsShareSnackbar(r.score);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(text)),
+                  );
+                },
                 child: Text(l10n.resultsShare),
               ),
               const SizedBox(height: 12),
@@ -96,78 +101,6 @@ class ResultsScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-Future<void> _openShareSheet(BuildContext context, RunResult r) async {
-  final AppLocalizations l10n = AppLocalizations.of(context)!;
-  await showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: const Color(0xFF0C1024),
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
-    builder: (BuildContext ctx) {
-      return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Container(
-                width: 42,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                l10n.resultsSharePickPlatform,
-                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
-                      color: Colors.white.withValues(alpha: 0.92),
-                    ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        Navigator.of(ctx).pop();
-                        await ResultsShareService.share(context: context, result: r, template: ShareTemplate.tiktok);
-                      },
-                      child: Text(l10n.sharePlatformTikTok),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        Navigator.of(ctx).pop();
-                        await ResultsShareService.share(
-                          context: context,
-                          result: r,
-                          template: ShareTemplate.instagram,
-                        );
-                      },
-                      child: Text(l10n.sharePlatformInstagram),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                l10n.resultsShareHintFormats,
-                textAlign: TextAlign.center,
-                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: Colors.white54),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
 }
 
 String _breakdownLine(AppLocalizations l10n, JudgementBreakdown b) {
