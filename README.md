@@ -54,3 +54,5 @@ This repo includes a Docker image setup for building an Android APK in a reprodu
 Note: running an Android emulator inside Docker is usually not practical; the container is meant for **build**.  
 On Ubuntu VM, run emulator on host, install APK from build output.
 
+## My new point, new options
+
