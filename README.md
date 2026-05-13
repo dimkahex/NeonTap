@@ -55,6 +55,7 @@ Note: running an Android emulator inside Docker is usually not practical; the co
 On Ubuntu VM, run emulator on host, install APK from build output.
 
 ## My new point, new options no point
+## My new point, new options add fix
 
 ## Second commit
 ыаывпдлвпадлвиам
